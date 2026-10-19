@@ -1,11 +1,11 @@
 ---
 doc: checklist
-status: draft
+status: approved
 ---
 
 # FloorCraft Build Checklist
 
-Build mode: Not chosen yet — choose learn or fast after approval of the build order.
+Build mode: Learn — short explanation and hands-on learner check after each verified slice, before its commit.
 
 Approved product and architecture: `scope.md`, `prd.md`, and `spec.md`. Implement in this workspace using the learner-selected JavaScript/JSX, React/Vite, React Konva, ordinary CSS, and browser-only deterministic simulation. Keep the existing curriculum directories untouched. No backend, AI API, accounts, furniture library, configurable scenarios, or extra dashboard features.
 
