@@ -45,7 +45,7 @@ Each slice follows a test-first cycle for its logic: write a focused failing tes
 
 ## Hands-on Checkpoints
 
-- [ ] Early usable behavior explored — after slice 1, try editing and real rush-hour movement; review one moved-table fixture and raw counters; clarify feedback and resolve failures before continuing.
+- [x] Early usable behavior explored — learner tried slice 1 and reported the controls and behavior feel reliable, with no changes requested. Shared moved-table raw-counter evidence is recorded under Revisions.
 - [ ] Final kick-the-tires exploration and feedback completed — after slice 3, try the complete core journey, refresh behavior and awkward interactions. In learn mode, each slice additionally pauses for its learner check; in fast mode, slice 2's check is exercised here.
 
 ## Final Review
@@ -67,3 +67,8 @@ Reflection: Not offered yet; keep personal answers in the ignored learner profil
 Activity mode: To be recorded from what actually happens.
 
 ## Revisions
+
+- Slice 1 implementation note: added `src/app/clock.js` and `tests/clock.test.js` as a small testable presentation-clock boundary. The engine remains DOM-free; the clock proves fixed-tick accumulation, bounded catch-up, hidden-time discard, and snap-after-batch rendering. No product or stack change.
+- Slice 1 remains unchecked until the learn-mode hands-on check and feedback are complete. Initial mechanical checks passed; independent review then found edited-layout queue overtaking and stale partial drawings after mid-run errors. Regression tests were added and the fixes retain FIFO physical ordering and clear failed-run presentation. Final verification results are recorded below before handoff.
+- Slice 1 final mechanical evidence: Node 24.22.0 unit suite 36/36; Chromium suite 8/8; production build successful. A full browser run completed 24/24 with no page/console errors. Moved-table experiment: table `(3,5)` → 1,198 walking ticks and 321 blocked ticks; table `(4,3)` → 1,384 walking ticks and 603 blocked ticks; both complete 24/24. Each tick is 0.5 simulated seconds. Learn-mode feedback and the slice commit are still pending; heatmaps/comparison and persistence remain later slices.
+- 2026-10-20: learner completed the slice-1 hands-on steps, reported reliable controls/behavior, and requested slice 2. Reverification before checkpoint: 36/36 unit tests, 8/8 browser tests, production build successful (nonblocking bundle-size warning). No refinements requested. Slice 2 follows the approved comparison/heatmap design; no new scope or engine changes are planned.

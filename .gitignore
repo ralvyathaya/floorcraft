@@ -8,3 +8,9 @@
 
 # Local worktrees
 /.worktrees/
+
+node_modules/
+dist/
+test-results/
+playwright-report/
+.superpowers/
