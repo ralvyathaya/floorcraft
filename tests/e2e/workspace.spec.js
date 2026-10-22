@@ -6,6 +6,63 @@ test.beforeEach(async ({ page }) => {
   await page.reload();
 });
 
+test('committed layout and completed snapshots survive reload, but an active run does not', async ({ page }) => {
+  test.setTimeout(150000);
+  const canvas = page.locator('canvas').first();
+  const box = await canvas.boundingBox();
+  const geometry = await page.locator('.canvas-shell').evaluate((node) => ({ scale: Number(node.dataset.scale), x: Number(node.dataset.originX), y: Number(node.dataset.originY) }));
+  const point = ([x, y]) => ({ x: box.x + geometry.x + x * geometry.scale, y: box.y + geometry.y + y * geometry.scale });
+  const start = point([3.5, 5.25]); const end = point([1.5, 1.75]);
+  await page.mouse.move(start.x, start.y); await page.mouse.down(); await page.mouse.move(end.x, end.y, { steps: 12 }); await page.mouse.up();
+  await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeEnabled();
+  const signature = await page.locator('.canvas-shell').getAttribute('data-layout-signature');
+  await page.reload();
+  await expect(page.locator('.canvas-shell')).toHaveAttribute('data-layout-signature', signature);
+  await page.getByRole('button', { name: 'Simulate Rush Hour' }).click();
+  await expect(page.getByText('Simulation complete', { exact: true })).toBeVisible({ timeout: 60000 });
+  await page.reload();
+  await expect(page.getByText('Simulation complete', { exact: true })).toBeVisible();
+  await expect(page.getByText('24 / 24', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Simulate Rush Hour' }).click();
+  await expect(page.getByText('Simulation running', { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByText('Simulation complete', { exact: true })).toBeVisible();
+  await expect(page.getByText('24 / 24', { exact: true })).toBeVisible();
+  await expect(page.locator('.canvas-shell')).toHaveAttribute('data-active-customers', '0');
+});
+
+test('corrupt saves are preserved until explicit replacement', async ({ page }) => {
+  await page.evaluate(() => localStorage.setItem('floorcraft.workspace.v1', '{broken-save'));
+  await page.reload();
+  await expect(page.getByText(/saved workspace could not be recovered/i)).toBeVisible();
+  await expect(page.getByRole('button', { name: /Replace unreadable save/i })).toBeVisible();
+  await expect(page.getByText('No completed experiment yet')).toBeVisible();
+  await page.getByRole('button', { name: /Replace unreadable save/i }).click();
+  await expect(page.getByText(/unreadable save replaced/i)).toBeVisible();
+  await page.reload();
+  await expect(page.getByText('Ready to simulate', { exact: true })).toBeVisible();
+  await expect(page.getByText(/could not be recovered/i)).toHaveCount(0);
+});
+
+test('storage write failures keep the experiment usable and show an unsaved warning', async ({ page }) => {
+  await page.addInitScript(() => {
+    const original = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (...args) {
+      if (args[0] === 'floorcraft.workspace.v1') throw new Error('quota fixture');
+      return original.apply(this, args);
+    };
+  });
+  await page.reload();
+  const canvas = page.locator('canvas').first();
+  const box = await canvas.boundingBox();
+  const geometry = await page.locator('.canvas-shell').evaluate((node) => ({ scale: Number(node.dataset.scale), x: Number(node.dataset.originX), y: Number(node.dataset.originY) }));
+  const point = ([x, y]) => ({ x: box.x + geometry.x + x * geometry.scale, y: box.y + geometry.y + y * geometry.scale });
+  const start = point([3.5, 5.25]); const end = point([1.5, 1.75]);
+  await page.mouse.move(start.x, start.y); await page.mouse.down(); await page.mouse.move(end.x, end.y, { steps: 12 }); await page.mouse.up();
+  await expect(page.getByText(/Changes cannot be saved in this browser/i)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeEnabled();
+});
+
 test('opens the premade café workspace with an obvious next action', async ({ page }) => {
   await expect(page).toHaveTitle(/FloorCraft/);
   await expect(page.getByRole('heading', { name: 'FloorCraft' })).toBeVisible();

@@ -6,6 +6,7 @@ import {
   workspaceReducer,
   workingLayout,
   canonicalSignature,
+  hydrateWorkspace,
 } from '../src/app/workspace.js';
 import * as workspaceModule from '../src/app/workspace.js';
 
@@ -139,5 +140,25 @@ describe('workspace state', () => {
     const reset = workspaceModule.canvasPresentation?.(workspaceReducer(edited, { type: 'RESET_COMPARISON' }), staleRunner);
     expect(reset?.heatmap).toBeNull();
     expect(reset?.runView).toBeNull();
+  });
+
+  test('hydrating restores only saved geometry/results and always starts in working view with empty session state', () => {
+    const saved = { workingLayout: structuredClone(openLayout), baseline: snapshotOf(), latest: snapshotOf() };
+    const hydrated = hydrateWorkspace(saved, openLayout);
+    expect(hydrated.view).toBe('working');
+    expect(hydrated.undo).toEqual([]);
+    expect(hydrated.activeRun).toBeNull();
+    expect(hydrated.status).toBe('idle');
+    expect(hydrated.baseline).toEqual(saved.baseline);
+    expect(hydrated.latest).toEqual(saved.latest);
+  });
+
+  test('storage readiness can preserve an unreadable save until explicit replacement consent', () => {
+    const initial = createWorkspace(openLayout);
+    const blocked = workspaceReducer(initial, { type: 'STORAGE_READY', preserveUnreadable: true });
+    expect(blocked.hydrated).toBe(true);
+    expect(blocked.storageBlocked).toBe(true);
+    const allowed = workspaceReducer(blocked, { type: 'STORAGE_ALLOWED' });
+    expect(allowed.storageBlocked).toBe(false);
   });
 });

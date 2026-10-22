@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import ComparisonPanel from './ComparisonPanel.jsx';
 
-export default function SimulationSidebar({ running, runView, baseline, latest, view, tested, status, message, onStart, onStop, onView, onReset }) {
+export default function SimulationSidebar({ running, runView, baseline, latest, view, tested, status, message, storageNotice, unreadableSave, onStart, onStop, onView, onReset, onReplaceSave }) {
   const dialog = useRef(null);
   const cancel = useRef(null);
   const reset = useRef(null);
@@ -27,6 +27,8 @@ export default function SimulationSidebar({ running, runView, baseline, latest, 
       <small>{runView?.customers.filter((customer) => customer.cell && !customer.outcome).length ?? 0} customers in motion</small>
     </div>}
     {message && <p className="notice" role="status">{message}</p>}
+    {storageNotice && <p className="notice caution" role="alert">{storageNotice}</p>}
+    {unreadableSave && <div className="notice caution" role="alert"><strong>Saved workspace needs review.</strong><p>The previous save was not readable. Nothing has overwritten it.</p><button onClick={onReplaceSave}>Replace unreadable save with this workspace</button></div>}
     {baseline && !tested && view === 'working' && <p className="notice caution" role="status">Untested changes. Results below belong to earlier tested layouts, not the current furniture. Run again to test these changes; old heatmaps are hidden.</p>}
     <div className="section-heading"><h3>Experiment results</h3><span>{latest ? 'TESTED SNAPSHOTS' : 'NOT RUN YET'}</span></div>
     <ComparisonPanel baseline={baseline} latest={latest} view={view} running={running} onView={onView} />

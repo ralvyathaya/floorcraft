@@ -20,11 +20,25 @@ function freezeSnapshot(value) {
 }
 
 export function createWorkspace(layout) {
-  return { workingLayout: structuredClone(layout), undo: [], baseline: null, latest: null, view: 'working', status: 'idle', activeRun: null, tested: false, message: null };
+  return { workingLayout: structuredClone(layout), undo: [], baseline: null, latest: null, view: 'working', status: 'idle', activeRun: null, tested: false, message: null, hydrated: false, storageBlocked: false };
+}
+
+export function hydrateWorkspace(saved, layout) {
+  const base = createWorkspace(saved?.workingLayout ?? layout);
+  return {
+    ...base,
+    baseline: saved?.baseline ? freezeSnapshot(structuredClone(saved.baseline)) : null,
+    latest: saved?.latest ? freezeSnapshot(structuredClone(saved.latest)) : null,
+    tested: saved?.latest ? isTested(saved.workingLayout, saved.latest) : false,
+    message: saved?.message ?? null,
+  };
 }
 
 export function workspaceReducer(state, action) {
   if (state.status === 'running' && ['COMMIT_MOVE', 'UNDO', 'RESET_COMPARISON', 'SET_VIEW', 'RUN_STARTED'].includes(action.type)) return state;
+  if (action.type === 'HYDRATE') return { ...hydrateWorkspace(action.saved, state.workingLayout), hydrated: true };
+  if (action.type === 'STORAGE_READY') return { ...state, hydrated: true, storageBlocked: Boolean(action.preserveUnreadable) };
+  if (action.type === 'STORAGE_ALLOWED') return { ...state, storageBlocked: false };
   if (action.type === 'COMMIT_MOVE') {
     if (state.status === 'running' || state.view !== 'working') return state;
     const current = state.workingLayout.objects.find((object) => object.id === action.object.id);
@@ -34,7 +48,7 @@ export function workspaceReducer(state, action) {
     if (!current || !inside || overlaps || JSON.stringify(current) === JSON.stringify(action.object)) return state;
     const layout = { ...state.workingLayout, objects: nextObjects.map((object) => structuredClone(object)) };
     return {
-      ...state,
+      ...state, hydrated: true,
       workingLayout: layout,
       undo: [...state.undo, structuredClone(state.workingLayout)].slice(-30), tested: isTested(layout, state.latest), view: 'working', message: null,
     };
@@ -44,21 +58,21 @@ export function workspaceReducer(state, action) {
     const previous = state.undo.at(-1);
     return previous ? { ...state, workingLayout: previous, undo: state.undo.slice(0, -1), tested: isTested(previous, state.latest), message: null } : state;
   }
-  if (action.type === 'RUN_STARTED') return state.view !== 'working' ? state : { ...state, status: 'running', activeRun: structuredClone(action.layout), message: null };
-  if (action.type === 'RUN_STOPPED') return { ...state, status: 'idle', activeRun: null, message: 'Simulation stopped. Previous completed results are unchanged.' };
-  if (action.type === 'RUN_ERROR') return { ...state, status: 'idle', activeRun: null, message: `Simulation error: ${action.message}. Previous completed results are unchanged.` };
+  if (action.type === 'RUN_STARTED') return state.view !== 'working' ? state : { ...state, hydrated: true, status: 'running', activeRun: structuredClone(action.layout), message: null };
+  if (action.type === 'RUN_STOPPED') return { ...state, hydrated: true, status: 'idle', activeRun: null, message: 'Simulation stopped. Previous completed results are unchanged.' };
+  if (action.type === 'RUN_ERROR') return { ...state, hydrated: true, status: 'idle', activeRun: null, message: `Simulation error: ${action.message}. Previous completed results are unchanged.` };
   if (action.type === 'RUN_COMPLETED') {
     if (!compatibleSnapshot(action.snapshot) || canonicalSignature(action.snapshot.layout) !== action.snapshot.signature) {
       return { ...state, status: 'idle', activeRun: null, message: 'Incompatible result rejected. Previous completed results are unchanged.' };
     }
     const snapshot = freezeSnapshot({ ...structuredClone(action.snapshot), runNumber: (state.latest?.runNumber ?? 0) + 1 });
-    return { ...state, status: 'idle', activeRun: null, baseline: state.baseline ?? snapshot, latest: snapshot, tested: isTested(state.workingLayout, snapshot), view: 'working', message: 'Simulation complete.' };
+    return { ...state, hydrated: true, status: 'idle', activeRun: null, baseline: state.baseline ?? snapshot, latest: snapshot, tested: isTested(state.workingLayout, snapshot), view: 'working', message: 'Simulation complete.' };
   }
   if (action.type === 'SET_VIEW') {
     if (action.view !== 'working' && (!['baseline', 'latest'].includes(action.view) || !compatibleSnapshot(state[action.view]))) return state;
     return { ...state, view: action.view };
   }
-  if (action.type === 'RESET_COMPARISON') return { ...state, baseline: null, latest: null, view: 'working', tested: false, message: 'Comparison reset. The current layout was kept.' };
+  if (action.type === 'RESET_COMPARISON') return { ...state, hydrated: true, baseline: null, latest: null, view: 'working', tested: false, message: 'Comparison reset. The current layout was kept.' };
   return state;
 }
 

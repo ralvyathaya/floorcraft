@@ -1,5 +1,6 @@
-import { useReducer, useState } from 'react';
-import { canvasPresentation, createWorkspace, workspaceReducer } from './app/workspace.js';
+import { useEffect, useReducer, useState } from 'react';
+import { canvasPresentation, createWorkspace, hydrateWorkspace, workspaceReducer } from './app/workspace.js';
+import { loadWorkspace, replaceUnreadableSave, saveWorkspace } from './app/storage.js';
 import { useSimulation } from './app/useSimulation.js';
 import { initialLayout } from './simulation/layout.js';
 import FloorplanCanvas from './components/FloorplanCanvas.jsx';
@@ -8,6 +9,8 @@ import SimulationSidebar from './components/SimulationSidebar.jsx';
 
 export default function App() {
   const [workspace, dispatch] = useReducer(workspaceReducer, initialLayout, createWorkspace);
+  const [storageNotice, setStorageNotice] = useState(null);
+  const [unreadableSave, setUnreadableSave] = useState(null);
   const [tool, setTool] = useState('move');
   const [scale, setScale] = useState(65);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
@@ -21,6 +24,26 @@ export default function App() {
   const preview = workspace.view !== 'working';
   const presentation = canvasPresentation(workspace, simulation.view);
   const viewLabel = preview ? `${workspace.view === 'baseline' ? 'Baseline' : 'Latest'} Preview · Read only` : workspace.baseline ? workspace.tested ? 'Working Layout · Tested' : 'Untested changes' : 'Working Layout';
+  const hydrated = workspace.hydrated;
+  useEffect(() => {
+    const result = loadWorkspace(window.localStorage);
+    if (result.kind === 'loaded') {
+      dispatch({ type: 'HYDRATE', saved: result.workspace });
+      if (result.message) setStorageNotice(result.message);
+    } else if (result.kind === 'invalid') {
+      setUnreadableSave(result.raw);
+      setStorageNotice(result.message);
+      dispatch({ type: 'STORAGE_READY', preserveUnreadable: true });
+    } else if (result.kind === 'unavailable') {
+      setStorageNotice(result.message);
+      dispatch({ type: 'STORAGE_READY' });
+    } else dispatch({ type: 'STORAGE_READY' });
+  }, []);
+  useEffect(() => {
+    if (!hydrated || workspace.storageBlocked) return;
+    const result = saveWorkspace(window.localStorage, workspace);
+    if (!result.ok) setStorageNotice(result.message);
+  }, [workspace, hydrated]);
   function start() {
     if (running || preview) return;
     setStatus('running');
@@ -46,7 +69,7 @@ export default function App() {
         <span data-testid="viewport-status" data-offset={`${offset.x},${offset.y}`} className="sr-only">{Math.round(scale / 65 * 100)}%</span>
         <div className="editor-footer"><span><i className="legend-dot" /> Customer <i className="legend-dot waiting" /> In queue</span><span>Made for curious café owners.</span></div>
       </section>
-      <SimulationSidebar running={running} runView={simulation.view} baseline={workspace.baseline} latest={workspace.latest} view={workspace.view} tested={workspace.tested} status={status} message={workspace.message} onStart={start} onStop={stop} onView={(view) => dispatch({ type: 'SET_VIEW', view })} onReset={() => { dispatch({ type: 'RESET_COMPARISON' }); setStatus('idle'); }} />
+      <SimulationSidebar running={running} runView={simulation.view} baseline={workspace.baseline} latest={workspace.latest} view={workspace.view} tested={workspace.tested} status={status} message={workspace.message} storageNotice={storageNotice} unreadableSave={unreadableSave} onStart={start} onStop={stop} onView={(view) => dispatch({ type: 'SET_VIEW', view })} onReset={() => { dispatch({ type: 'RESET_COMPARISON' }); setStatus('idle'); }} onReplaceSave={() => { const result = replaceUnreadableSave(window.localStorage, workspace); if (result.ok) { dispatch({ type: 'STORAGE_ALLOWED' }); setUnreadableSave(null); setStorageNotice('Unreadable save replaced with the current workspace.'); } else setStorageNotice(result.message); }} />
     </div>
   </main>;
 }
