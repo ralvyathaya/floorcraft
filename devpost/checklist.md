@@ -46,7 +46,7 @@ Each slice follows a test-first cycle for its logic: write a focused failing tes
 ## Hands-on Checkpoints
 
 - [x] Early usable behavior explored — learner tried slice 1 and reported the controls and behavior feel reliable, with no changes requested. Shared moved-table raw-counter evidence is recorded under Revisions.
-- [ ] Final kick-the-tires exploration and feedback completed — after slice 3, try the complete core journey, refresh behavior and awkward interactions. In learn mode, each slice additionally pauses for its learner check; in fast mode, slice 2's check is exercised here.
+- [x] Final kick-the-tires exploration and feedback completed — after slice 3, try the complete core journey, refresh behavior and awkward interactions. In learn mode, each slice additionally pauses for its learner check; in fast mode, slice 2's check is exercised here.
 
 ## Final Review
 
@@ -80,3 +80,6 @@ Activity mode: To be recorded from what actually happens.
 - Slice 2 saved as commit `406a783`; slice 3 remains the next unchecked build slice.
 - Slice 3 implementation: added versioned `floorcraft.workspace.v1` local storage with strict layout/snapshot validation, safe incompatible-result clearing, explicit unreadable-save replacement, and in-memory fallback warnings. Reload always returns to Working Layout and never restores active runs/undo/viewport state. README documents local-origin save boundaries and recovery behavior.
 - Slice 3 mechanical evidence: Node 24.22.0 unit suite 57/57; Chromium suite 12/12; production build successful; production preview at `http://127.0.0.1:4173` loaded the app with no browser runtime errors in the smoke check. Browser coverage includes edit/completion reloads, active-run refresh, corrupt-save preservation/replacement, unavailable storage, and prior comparison behavior.
+- Slice 3 saved as commit `5308138`. The implementation slice is mechanically complete; the final learner kick-the-tires checkpoint and explicit ready-to-ship confirmation remain open before the build workflow ends.
+- Final learner review: the core journey and movement felt neither broken nor confusing. Learner wants separate UI adjustments later with another agent; no UI-polish changes were included in this checkpoint. Final review remains open until those deferred adjustments are handled and the learner explicitly confirms the proof of concept is ready to ship.
+- Final review verification: Node 24.22.0 unit suite 57/57, Chromium suite 12/12, and production build successful. README persistence wording was reconciled with the implemented browser-local recovery behavior.
