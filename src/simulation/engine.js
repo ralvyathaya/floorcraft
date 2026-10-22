@@ -2,8 +2,9 @@ import { buildNavigationMap, cellKey, findRoute, neighbors, portalCell, sameCell
 import { buildQueues, joinQueue, queueTarget, releaseCustomer } from './queues.js';
 import { resolveMovements } from './movement.js';
 import { deriveMetrics } from './metrics.js';
+import { canonicalSignature } from './layout.js';
 
-export const layoutSignature = (layout) => JSON.stringify({ ...layout, objects: [...layout.objects].sort((a, b) => a.id.localeCompare(b.id)) });
+export const layoutSignature = canonicalSignature;
 
 function transition(run, customer, phase, tick = run.tick) {
   customer.phase = phase;

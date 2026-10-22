@@ -1,8 +1,11 @@
-const seconds = (value) => value === null ? '—' : `${value.toFixed(1)}s`;
+import { useRef } from 'react';
+import ComparisonPanel from './ComparisonPanel.jsx';
 
-export default function SimulationSidebar({ running, runView, latest, status, message, onStart, onStop }) {
-  const metrics = latest?.metrics;
-  const failures = metrics ? Object.values(metrics.failures).reduce((sum, count) => sum + count, 0) : 0;
+export default function SimulationSidebar({ running, runView, baseline, latest, view, tested, status, message, onStart, onStop, onView, onReset }) {
+  const dialog = useRef(null);
+  const cancel = useRef(null);
+  const reset = useRef(null);
+  const simulate = useRef(null);
   const terminal = runView?.customers.filter((customer) => customer.outcome).length ?? 0;
   return <aside className="sidebar">
     <div className="eyebrow">FLOW EXPERIMENT</div>
@@ -12,7 +15,8 @@ export default function SimulationSidebar({ running, runView, latest, status, me
       <span className="scenario-icon" aria-hidden="true">◷</span>
       <div><strong>Takeaway rush hour</strong><small>24 customers · fixed arrivals & service</small></div>
     </div>
-    <button className="primary" onClick={running ? onStop : onStart}>{running ? 'Stop Simulation' : 'Simulate Rush Hour'}</button>
+    <button className="primary" ref={simulate} disabled={!running && view !== 'working'} onClick={running ? onStop : onStart}>{running ? 'Stop Simulation' : 'Simulate Rush Hour'}</button>
+    {view !== 'working' && <p className="notice">Read-only preview. Return to Working Layout to edit or simulate.</p>}
     <div className="run-status" role="status">
       <span className={`status-dot ${running ? 'pulse' : ''}`} />
       <strong>{running ? 'Simulation running' : status === 'error' ? 'Simulation error' : status === 'stopped' ? 'Simulation stopped' : latest ? 'Simulation complete' : 'Ready to simulate'}</strong>
@@ -22,16 +26,16 @@ export default function SimulationSidebar({ running, runView, latest, status, me
       <span>{terminal} / 24 outcomes · {(runView?.tick ?? 0) / 2}s simulated</span>
       <small>{runView?.customers.filter((customer) => customer.cell && !customer.outcome).length ?? 0} customers in motion</small>
     </div>}
-    {message && <p className="notice">{message}</p>}
-    <div className="section-heading"><h3>Experiment results</h3><span>{latest ? 'LATEST RUN' : 'NOT RUN YET'}</span></div>
-    {!metrics ? <div className="empty-results"><span aria-hidden="true">↗</span><strong>No completed experiment yet</strong><p>Run your first simulation to see how this layout performs.</p></div> : <>
-      <div className="metric-row"><span>Average waiting time<small>completed customers</small></span><strong>{seconds(metrics.averageWaitingSeconds)}</strong></div>
-      <div className="metric-row"><span>Average walking time<small>completed customers</small></span><strong>{seconds(metrics.averageWalkingSeconds)}</strong></div>
-      <div className="metric-row"><span>Movement obstruction</span><strong>{metrics.congestionPercent === null ? '—' : `${metrics.congestionPercent.toFixed(1)}%`}</strong></div>
-      <div className="metric-row"><span>Customers completed</span><strong>{metrics.completed} / {metrics.scheduled}</strong></div>
-      <div className={failures ? 'notice caution' : 'notice'}>{failures ? `${failures} unable to complete: ${metrics.failures.unreachable} unreachable, ${metrics.failures.stuck} stuck, ${metrics.failures['timed-out']} timed-out.` : 'Every customer completed their journey.'}</div>
-      {metrics.outsideDelayed > 0 && <small className="muted">{metrics.outsideDelayed} customers experienced outside admission delays ({metrics.outsideHoldingSeconds.toFixed(1)} customer-seconds).</small>}
-    </>}
+    {message && <p className="notice" role="status">{message}</p>}
+    {baseline && !tested && view === 'working' && <p className="notice caution" role="status">Untested changes. Results below belong to earlier tested layouts, not the current furniture. Run again to test these changes; old heatmaps are hidden.</p>}
+    <div className="section-heading"><h3>Experiment results</h3><span>{latest ? 'TESTED SNAPSHOTS' : 'NOT RUN YET'}</span></div>
+    <ComparisonPanel baseline={baseline} latest={latest} view={view} running={running} onView={onView} />
+    <button className="reset-comparison" ref={reset} disabled={running || !baseline} onClick={() => { dialog.current.showModal(); cancel.current.focus(); }}>Start New Comparison</button>
+    <dialog ref={dialog} aria-labelledby="reset-heading" aria-describedby="reset-description" onClose={() => (latest ? reset : simulate).current.focus()}>
+      <h3 id="reset-heading">Start a new comparison?</h3>
+      <p id="reset-description">This clears the baseline and latest results. Your current working layout and edits will be kept. The next completed run becomes the new baseline.</p>
+      <div className="dialog-actions"><button ref={cancel} onClick={() => dialog.current.close()}>Cancel</button><button className="primary" onClick={() => { onReset(); dialog.current.close(); }}>Clear comparison</button></div>
+    </dialog>
     <div className="model-note"><strong>An experiment, not a forecast.</strong><p>Synthetic arrivals, simple queues, and a fixed service model. Results illustrate layout effects—not real-world performance predictions.</p></div>
   </aside>;
 }

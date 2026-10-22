@@ -10,3 +10,12 @@ export const initialLayout = {
     { id: 'chair-b', type: 'chair', label: 'Chair', x: 8, y: 5.5, width: 0.5, height: 0.5 },
   ],
 };
+
+// Geometry only: insertion order and decorative labels cannot change a test's identity.
+export function canonicalSignature({ room, portal, objects }) {
+  return JSON.stringify({
+    room: { width: room.width, height: room.height, cellSize: room.cellSize },
+    portal: { x: portal.x, y: portal.y, width: portal.width, height: portal.height, kind: portal.kind },
+    objects: [...objects].sort((a, b) => a.id.localeCompare(b.id)).map(({ id, type, x, y, width, height, serviceFace }) => ({ id, type, x, y, width, height, serviceFace })),
+  });
+}

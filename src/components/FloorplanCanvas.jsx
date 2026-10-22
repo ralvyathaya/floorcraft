@@ -2,8 +2,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Circle, Layer, Line, Rect, Stage, Text } from 'react-konva';
 import Furniture from './Furniture.jsx';
 import { buildNavigationMap, validatePlacement } from '../simulation/navigation.js';
+import { canonicalSignature } from '../simulation/layout.js';
+import { heatColor } from '../simulation/metrics.js';
 
-export default function FloorplanCanvas({ layout, runView, tool, scale: zoom, offset, setOffset, disabled, onCommitMove }) {
+export default function FloorplanCanvas({ layout, runView, heatmap, tool, scale: zoom, offset, setOffset, disabled, onCommitMove }) {
   const wrap = useRef(null);
   const [size, setSize] = useState({ width: 700, height: 540 });
   useEffect(() => {
@@ -31,7 +33,7 @@ export default function FloorplanCanvas({ layout, runView, tool, scale: zoom, of
     event.target.position({ x: accepted.x * scale, y: accepted.y * scale });
     setCandidate(null);
   };
-  return <div className="canvas-shell" ref={wrap} data-scale={scale} data-origin-x={origin.x + offset.x} data-origin-y={origin.y + offset.y} data-active-customers={runView?.customers.filter((customer) => customer.cell && !customer.outcome).length ?? 0}>
+  return <div className="canvas-shell" ref={wrap} data-layout-signature={canonicalSignature(layout)} data-heatmap={JSON.stringify(heatmap ?? null)} data-scale={scale} data-origin-x={origin.x + offset.x} data-origin-y={origin.y + offset.y} data-active-customers={runView?.customers.filter((customer) => customer.cell && !customer.outcome).length ?? 0}>
     <Stage width={size.width} height={size.height} x={origin.x + offset.x} y={origin.y + offset.y} draggable={tool === 'pan'} onDragEnd={(event) => { if (event.target === event.target.getStage()) setOffset({ x: event.target.x() - origin.x, y: event.target.y() - origin.y }); }} className="floor-stage">
       <Layer>
         <Rect width={width} height={height} fill="#eee9df" stroke="#cfc8ba" strokeWidth={2} cornerRadius={12} />
@@ -40,6 +42,9 @@ export default function FloorplanCanvas({ layout, runView, tool, scale: zoom, of
         <Rect x={layout.portal.x * scale} y={layout.portal.y * scale} width={layout.portal.width * scale} height={layout.portal.height * scale} fill="#272a28" cornerRadius={4} />
         <Text x={layout.portal.x * scale + 8} y={layout.portal.y * scale + layout.portal.height * scale + 8} text="ENTRANCE / EXIT" fontSize={11} fill="#617768" />
         {layout.objects.map((object) => <Furniture key={object.id} object={object} scale={scale} draggable={!disabled && tool === 'move'} invalid={candidate?.object.id === object.id && !candidate.validation.valid} onDragMove={(event) => onDragMove(event, object)} onDragEnd={(event) => onDragEnd(event, object)} />)}
+      </Layer>
+      <Layer listening={false}>
+        {heatmap?.filter((cell) => cell.ticks > 0).map((cell) => <Rect key={`${cell.x},${cell.y}`} x={cell.x * layout.room.cellSize * scale} y={cell.y * layout.room.cellSize * scale} width={layout.room.cellSize * scale} height={layout.room.cellSize * scale} fill={heatColor(cell.ticks * 0.5)} opacity={0.65} />)}
       </Layer>
       <Layer listening={false}>
         {runView?.queues && Object.values(runView.queues).map((queue, index) => <Line key={index} points={queue.lane.flatMap((cell) => [(cell.x + 0.5) * layout.room.cellSize * scale, (cell.y + 0.5) * layout.room.cellSize * scale])} stroke="#8a957e" strokeWidth={scale * 0.08} dash={[5, 6]} opacity={0.35} />)}

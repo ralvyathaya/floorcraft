@@ -129,3 +129,87 @@ test('a mid-run exception clears partial customer presentation without publishin
   await expect(page.locator('.canvas-shell')).toHaveAttribute('data-active-customers', '0');
   await expect(page.getByText('No completed experiment yet')).toBeVisible();
 });
+
+async function moveTable(page, from, to) {
+  const box = await page.locator('canvas').first().boundingBox();
+  const geometry = await page.locator('.canvas-shell').evaluate((node) => ({ scale: Number(node.dataset.scale), x: Number(node.dataset.originX), y: Number(node.dataset.originY) }));
+  const point = ([x, y]) => ({ x: box.x + geometry.x + x * geometry.scale, y: box.y + geometry.y + y * geometry.scale });
+  const start = point(from); const end = point(to);
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down();
+  await page.mouse.move(end.x, end.y, { steps: 12 });
+  await page.mouse.up();
+}
+
+test('baseline and latest previews show their own heatmaps without losing untested edits, reset confirms', async ({ page }) => {
+  test.setTimeout(150000);
+  const errors = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await expect(page.getByRole('button', { name: 'Heatmap', exact: true })).toBeDisabled();
+  await page.getByRole('button', { name: 'Simulate Rush Hour' }).click();
+  await expect(page.getByText('Simulation complete', { exact: true })).toBeVisible({ timeout: 60000 });
+  await expect(page.getByText(/first completed run is your baseline/i)).toBeVisible();
+  await page.getByRole('button', { name: 'Heatmap', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Heatmap', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByText('Blocked-customer seconds')).toBeVisible();
+  const shell = page.locator('.canvas-shell');
+  const baselineHeat = await shell.getAttribute('data-heatmap');
+  expect(JSON.parse(baselineHeat).some((cell) => cell.ticks > 0)).toBe(true);
+  const original = await shell.getAttribute('data-layout-signature');
+  // A known route-sensitive fixture: table origin (3,5) → (4,3).
+  await moveTable(page, [3.5, 5.25], [4.5, 3.25]);
+  await expect(page.locator('.layout-badge')).toHaveText('Untested changes');
+  await expect(page.getByRole('button', { name: 'Heatmap', exact: true })).toBeDisabled();
+  await expect(shell).toHaveAttribute('data-heatmap', 'null');
+  await page.getByRole('button', { name: 'Simulate Rush Hour' }).click();
+  await expect(page.getByText('Simulation complete', { exact: true })).toBeVisible({ timeout: 60000 });
+  const latest = await shell.getAttribute('data-layout-signature');
+  const latestHeat = await shell.getAttribute('data-heatmap');
+  expect(latest).not.toBe(original);
+  expect(latestHeat).not.toBe(baselineHeat);
+  const rows = page.getByRole('table', { name: 'Baseline and latest results' });
+  await expect(rows.getByRole('columnheader', { name: 'Baseline Run 1', exact: true })).toBeVisible();
+  await expect(rows.getByRole('columnheader', { name: 'Latest Run 2', exact: true })).toBeVisible();
+  await expect(rows.getByText(/worse/i).first()).toBeVisible();
+  await moveTable(page, [4.5, 3.25], [1.5, 1.75]);
+  const unsimulated = await shell.getAttribute('data-layout-signature');
+  await expect(page.getByText(/results below belong to earlier tested layouts/i)).toBeVisible();
+  for (const [name, signature, heat] of [['Baseline Preview', original, baselineHeat], ['Latest Preview', latest, latestHeat]]) {
+    await page.getByRole('button', { name, exact: true }).click();
+    await expect(page.locator('.layout-badge')).toHaveText(`${name} · Read only`);
+    await expect(shell).toHaveAttribute('data-layout-signature', signature);
+    await expect(shell).toHaveAttribute('data-heatmap', heat);
+    await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeDisabled();
+    await expect(page.getByRole('button', { name: 'Select / Move', exact: true })).toBeDisabled();
+    await expect(page.getByRole('button', { name: 'Simulate Rush Hour' })).toBeDisabled();
+    await expect(page.getByRole('button', { name: 'Pan', exact: true })).toBeEnabled();
+    // Attempting to drag the visible table cannot mutate its snapshot.
+    await moveTable(page, name === 'Baseline Preview' ? [3.5, 5.25] : [4.5, 3.25], [1.5, 1.75]);
+    await expect(shell).toHaveAttribute('data-layout-signature', signature);
+    await page.getByRole('button', { name: 'Heatmap', exact: true }).click();
+    await expect(shell).toHaveAttribute('data-heatmap', 'null');
+    await page.getByRole('button', { name: 'Heatmap', exact: true }).click();
+    await page.getByRole('button', { name: 'Return to Working Layout' }).click();
+    await expect(shell).toHaveAttribute('data-layout-signature', unsimulated);
+    await expect(shell).toHaveAttribute('data-heatmap', 'null');
+  }
+  const reset = page.getByRole('button', { name: 'Start New Comparison', exact: true });
+  await reset.focus();
+  await page.keyboard.press('Enter');
+  const dialog = page.getByRole('dialog', { name: 'Start a new comparison?' });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'Cancel', exact: true })).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(dialog).not.toBeVisible();
+  await expect(reset).toBeFocused();
+  await reset.click();
+  await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await expect(rows).toBeVisible();
+  await expect(shell).toHaveAttribute('data-layout-signature', unsimulated);
+  await reset.click();
+  await dialog.getByRole('button', { name: 'Clear comparison', exact: true }).click();
+  await expect(page.getByText('No completed experiment yet')).toBeVisible();
+  await expect(shell).toHaveAttribute('data-layout-signature', unsimulated);
+  await expect(page.getByRole('button', { name: 'Baseline Preview', exact: true })).toBeDisabled();
+  expect(errors).toEqual([]);
+});

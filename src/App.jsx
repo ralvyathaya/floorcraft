@@ -1,5 +1,5 @@
 import { useReducer, useState } from 'react';
-import { createWorkspace, workspaceReducer } from './app/workspace.js';
+import { canvasPresentation, createWorkspace, workspaceReducer } from './app/workspace.js';
 import { useSimulation } from './app/useSimulation.js';
 import { initialLayout } from './simulation/layout.js';
 import FloorplanCanvas from './components/FloorplanCanvas.jsx';
@@ -18,7 +18,11 @@ export default function App() {
     onError(error) { dispatch({ type: 'RUN_ERROR', message: error.message }); setStatus('error'); },
   });
   const running = workspace.status === 'running';
+  const preview = workspace.view !== 'working';
+  const presentation = canvasPresentation(workspace, simulation.view);
+  const viewLabel = preview ? `${workspace.view === 'baseline' ? 'Baseline' : 'Latest'} Preview · Read only` : workspace.baseline ? workspace.tested ? 'Working Layout · Tested' : 'Untested changes' : 'Working Layout';
   function start() {
+    if (running || preview) return;
     setStatus('running');
     dispatch({ type: 'RUN_STARTED', layout: workspace.workingLayout });
     simulation.start(workspace.workingLayout);
@@ -33,14 +37,16 @@ export default function App() {
     </header>
     <div className="workspace-grid">
       <section className="editor" aria-label="Café layout editor">
-        <div className="editor-heading"><div><div className="eyebrow">YOUR SPACE, REIMAGINED</div><h2>The corner café <span>80 m²</span></h2></div><span className="layout-badge">{workspace.tested ? 'Working Layout' : workspace.baseline ? 'Untested changes' : 'Working Layout'}</span></div>
-        <div className="canvas-caption"><span>{running ? 'Editing locked during simulation' : 'Drag furniture to explore a different layout'}</span><span>10 × 8 m · 0.5 m grid</span></div>
-        <FloorplanCanvas layout={workspace.workingLayout} runView={simulation.view} tool={tool} scale={scale} offset={offset} setOffset={setOffset} disabled={running} onCommitMove={(object) => dispatch({ type: 'COMMIT_MOVE', object })} />
-        <Toolbar tool={tool} setTool={setTool} onUndo={() => dispatch({ type: 'UNDO' })} onZoom={(factor) => setScale((value) => Math.min(110, Math.max(30, value * factor)))} onFit={() => { setScale(65); setOffset({ x: 0, y: 0 }); }} heatmap={heatmap} setHeatmap={setHeatmap} disabled={running} canUndo={workspace.undo.length > 0} />
+        <div className="editor-heading"><div><div className="eyebrow">YOUR SPACE, REIMAGINED</div><h2>The corner café <span>80 m²</span></h2></div><span className="layout-badge" role="status">{viewLabel}</span></div>
+        <div className="canvas-caption"><span>{running ? 'Editing locked during simulation' : preview ? 'Read-only tested snapshot · working edits are safe' : 'Drag furniture to explore a different layout'}</span><span>10 × 8 m · 0.5 m grid</span></div>
+        {preview && <button className="return-working" onClick={() => dispatch({ type: 'SET_VIEW', view: 'working' })}>← Return to Working Layout</button>}
+        <FloorplanCanvas layout={presentation.layout} runView={presentation.runView} heatmap={heatmap ? presentation.heatmap : null} tool={tool} scale={scale} offset={offset} setOffset={setOffset} disabled={running || preview} onCommitMove={(object) => dispatch({ type: 'COMMIT_MOVE', object })} />
+        <Toolbar tool={tool} setTool={setTool} onUndo={() => dispatch({ type: 'UNDO' })} onZoom={(factor) => setScale((value) => Math.min(110, Math.max(30, value * factor)))} onFit={() => { setScale(65); setOffset({ x: 0, y: 0 }); }} heatmap={heatmap} setHeatmap={setHeatmap} disabled={running || preview} canUndo={workspace.undo.length > 0} canHeatmap={Boolean(presentation.heatmap)} />
+        {heatmap && presentation.heatmap && <div className="heat-legend" aria-label="Obstruction heatmap legend"><strong>Blocked-customer seconds</strong><span><i className="heat-zero" />0</span><span><i className="heat-low" />&gt;0</span><span><i className="heat-medium" />2</span><span><i className="heat-high" />5+</span><small>Fixed scale · obstruction, not ordinary queueing</small></div>}
         <span data-testid="viewport-status" data-offset={`${offset.x},${offset.y}`} className="sr-only">{Math.round(scale / 65 * 100)}%</span>
         <div className="editor-footer"><span><i className="legend-dot" /> Customer <i className="legend-dot waiting" /> In queue</span><span>Made for curious café owners.</span></div>
       </section>
-      <SimulationSidebar running={running} runView={simulation.view} latest={workspace.latest} status={status} message={workspace.message} onStart={start} onStop={stop} />
+      <SimulationSidebar running={running} runView={simulation.view} baseline={workspace.baseline} latest={workspace.latest} view={workspace.view} tested={workspace.tested} status={status} message={workspace.message} onStart={start} onStop={stop} onView={(view) => dispatch({ type: 'SET_VIEW', view })} onReset={() => { dispatch({ type: 'RESET_COMPARISON' }); setStatus('idle'); }} />
     </div>
   </main>;
 }

@@ -264,7 +264,7 @@ Use plain serializable objects with JSDoc where helpful; JavaScript, not a TypeS
 | Navigation map | blocked cells/edges, service approaches, queue lanes | Derived per candidate/run; not saved |
 | Active run | tick, captured layout, occupancy, queue IDs/slots, customer phases/counters, obstruction grid | Engine instance owned by runner; discarded on stop/reload |
 | Customer outcome | ID, terminal outcome/reason, entry/exit ticks, last cell, waiting/walking/attempted/blocked counters | Finalized into result; includes every scheduled customer; last cell supports final failure markers |
-| Completed snapshot | engine/scenario version, layout copy/signature, elapsed ticks, metrics, outcome list, heatmap grid | Immutable baseline/latest; saved locally |
+| Completed snapshot | engine/scenario version, layout copy/signature, comparison-local run number, elapsed ticks, metrics, outcome list, heatmap grid | Immutable baseline/latest; saved locally |
 | Workspace save | schema version, working layout, baseline, latest | JSON in localStorage; small fixed-size dataset, no frame history |
 | UI state | view, selected ID, tool, viewport, heatmap visibility, messages, undo list | In-memory React state only |
 

@@ -1,5 +1,22 @@
-export function canonicalSignature(layout) {
-  return JSON.stringify({ ...layout, objects: [...layout.objects].sort((a, b) => a.id.localeCompare(b.id)) });
+import { canonicalSignature } from '../simulation/layout.js';
+import { createScenario } from '../simulation/scenario.js';
+export { canonicalSignature } from '../simulation/layout.js';
+
+const scenario = createScenario();
+export function compatibleSnapshot(snapshot) {
+  return Boolean(snapshot && snapshot.engineVersion === scenario.engineVersion && snapshot.scenarioVersion === scenario.version);
+}
+
+function isTested(layout, latest) {
+  return compatibleSnapshot(latest) && canonicalSignature(layout) === latest.signature;
+}
+
+function freezeSnapshot(value) {
+  if (value && typeof value === 'object') {
+    Object.values(value).forEach(freezeSnapshot);
+    Object.freeze(value);
+  }
+  return value;
 }
 
 export function createWorkspace(layout) {
@@ -15,26 +32,44 @@ export function workspaceReducer(state, action) {
     const inside = action.object.x >= 0 && action.object.y >= 0 && action.object.x + action.object.width <= state.workingLayout.room.width && action.object.y + action.object.height <= state.workingLayout.room.height;
     const overlaps = nextObjects.some((object) => object.id !== action.object.id && action.object.x < object.x + object.width && action.object.x + action.object.width > object.x && action.object.y < object.y + object.height && action.object.y + action.object.height > object.y);
     if (!current || !inside || overlaps || JSON.stringify(current) === JSON.stringify(action.object)) return state;
+    const layout = { ...state.workingLayout, objects: nextObjects.map((object) => structuredClone(object)) };
     return {
       ...state,
-      workingLayout: { ...state.workingLayout, objects: nextObjects.map((object) => structuredClone(object)) },
-      undo: [...state.undo, structuredClone(state.workingLayout)].slice(-30), tested: false, view: 'working',
+      workingLayout: layout,
+      undo: [...state.undo, structuredClone(state.workingLayout)].slice(-30), tested: isTested(layout, state.latest), view: 'working', message: null,
     };
   }
   if (action.type === 'UNDO') {
+    if (state.view !== 'working') return state;
     const previous = state.undo.at(-1);
-    return previous ? { ...state, workingLayout: previous, undo: state.undo.slice(0, -1), tested: state.latest ? canonicalSignature(previous) === state.latest.signature : false } : state;
+    return previous ? { ...state, workingLayout: previous, undo: state.undo.slice(0, -1), tested: isTested(previous, state.latest), message: null } : state;
   }
-  if (action.type === 'RUN_STARTED') return state.status === 'running' ? state : { ...state, status: 'running', activeRun: action.layout, view: 'working', message: null };
+  if (action.type === 'RUN_STARTED') return state.view !== 'working' ? state : { ...state, status: 'running', activeRun: structuredClone(action.layout), message: null };
   if (action.type === 'RUN_STOPPED') return { ...state, status: 'idle', activeRun: null, message: 'Simulation stopped. Previous completed results are unchanged.' };
   if (action.type === 'RUN_ERROR') return { ...state, status: 'idle', activeRun: null, message: `Simulation error: ${action.message}. Previous completed results are unchanged.` };
   if (action.type === 'RUN_COMPLETED') {
-    const snapshot = structuredClone(action.snapshot);
-    return { ...state, status: 'idle', activeRun: null, baseline: state.baseline ?? snapshot, latest: snapshot, tested: canonicalSignature(state.workingLayout) === snapshot.signature, view: 'working', message: 'Simulation complete.' };
+    if (!compatibleSnapshot(action.snapshot) || canonicalSignature(action.snapshot.layout) !== action.snapshot.signature) {
+      return { ...state, status: 'idle', activeRun: null, message: 'Incompatible result rejected. Previous completed results are unchanged.' };
+    }
+    const snapshot = freezeSnapshot({ ...structuredClone(action.snapshot), runNumber: (state.latest?.runNumber ?? 0) + 1 });
+    return { ...state, status: 'idle', activeRun: null, baseline: state.baseline ?? snapshot, latest: snapshot, tested: isTested(state.workingLayout, snapshot), view: 'working', message: 'Simulation complete.' };
   }
-  if (action.type === 'SET_VIEW') return { ...state, view: action.view };
+  if (action.type === 'SET_VIEW') {
+    if (action.view !== 'working' && (!['baseline', 'latest'].includes(action.view) || !compatibleSnapshot(state[action.view]))) return state;
+    return { ...state, view: action.view };
+  }
   if (action.type === 'RESET_COMPARISON') return { ...state, baseline: null, latest: null, view: 'working', tested: false, message: 'Comparison reset. The current layout was kept.' };
   return state;
 }
 
 export function workingLayout(state) { return state.workingLayout; }
+
+export function canvasPresentation(state, liveView) {
+  if (state.status === 'running') return { layout: state.workingLayout, runView: liveView, heatmap: null };
+  const snapshot = state.view === 'working' ? isTested(state.workingLayout, state.latest) ? state.latest : null : state[state.view];
+  return {
+    layout: state.view === 'working' ? state.workingLayout : snapshot.layout,
+    runView: snapshot ? { customers: snapshot.outcomes, tick: snapshot.elapsedTicks, alpha: 1 } : null,
+    heatmap: snapshot?.heatmap ?? null,
+  };
+}
