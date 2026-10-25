@@ -55,24 +55,28 @@ Each slice follows a test-first cycle for its logic: write a focused failing tes
 - [ ] Functional café and compact workspace revision — approved 2026-10-25 plan implemented and mechanically verified: 8/12/16 grouped seats; fixed mixed dine-in/takeaway demand; moving FIFO-production barista; role-specific circulation; capacity/fulfillment/service metrics; historical model/save compatibility; local Inter and viewport workspace. Included in the authorized verified checkpoint; final hands-on feedback remains pending. Earlier visual-only constraints are superseded for this approved model addition; original completed slices remain complete.
 
 - [ ] Isometric studio refinement — approved realistic semi-pixel café, soft contrast, three undoable presets, curated movable objects, projected drag/heatmap, honest comparison takeaways, and legacy-save compatibility. The earlier vector direction is superseded. Mechanical verification passed; the learner liked this direction and requested the final theme/rotation refinement below. Included in the authorized verified checkpoint; final hands-on retry remains pending.
-- [ ] Final technical review and verified checkpoint saved — A/B, diagnosis and recovery reviewed; commit after the final focused checks. This is separate from the learner's ready-to-ship confirmation below.
+- [x] Final technical review and verified checkpoint saved — A/B, diagnosis and recovery reviewed and saved as `aa5a2bd` after the final focused checks. This is separate from the learner's ready-to-ship confirmation below.
 - [ ] Final review complete — feedback resolved and learner confirms ready to ship
 
 After the learner's exploration, clarify observations before agreeing to fixes. Record agreed fixes here as unchecked items, then implement, mechanically verify, commit and have the learner retry each affected behavior before checking it off. No changes needed is a valid recorded outcome. Do not mark the review complete without explicit learner confirmation.
 
 ## Code Tour and App Map
 
-- [ ] Learning activity complete — guided route, focused alternative, prior practice connected, or brief recap
-- [ ] Optional edit and transfer reflection addressed — offered/declined/already covered/not applicable as appropriate
-- [ ] `devpost/app-map.html` generated from finished code, checked, and shown, including a project-grounded practice to reuse
+- [x] Learning activity complete — evidence-based brief recap delivered on 2026-10-25, connecting the controlled-capacity planning decision to executable evidence and an honest trade-off
+- [x] Optional edit and transfer reflection addressed — no optional product edit needed for this recap; optional reflection offered without requiring a response
+- [x] `devpost/app-map.html` generated from finished code, checked, and shown, including a project-grounded practice to reuse
 
-Activity and evidence: Not started. Planned focused practice: use the actual moved-table fixture and its route/obstruction counters to connect a specification claim to executable evidence. If this practice is completed during the early checkpoint, connect it to the final takeaway rather than repeat it. Read the skill's `references/code-tour.md` before the wrap-up.
-Route and stops: Record actual finished code paths and symbols after implementation; do not treat planned locations as completed stops.
-Edit outcome: Not offered yet; an edit is optional, not a second required exercise.
-Reflection: Not offered yet; keep personal answers in the ignored learner profile, not this public checklist or map.
-Activity mode: To be recorded from what actually happens.
+Activity and evidence: Completed a brief recap of the actual same-capacity, one-variable A/B decision. `tests/caseStudy.test.js` proves equal inventory, only pickup changed, determinism and non-mutating diagnosis. The actual completed runs both finish 24/24 and fulfill 12/18 dine-in requests; B reduces drink-ready time about 63.4s while increasing obstruction about 1.2pp. The reusable practice is to specify controlled conditions, verify one change, then qualify the conclusion. This records a delivered explanation, not a claim of learner mastery or café-user validation.
+Route and stops: The map provides a reference route, not an interactive tour: `src/app/caseStudy.js` / `workspaceReducer` (`APPLY_CASE_B`); `useSimulation.start` / `RUN_COMPLETED`; `deriveDiagnostics` / `App.showDiagnostic`. All paths and stable anchors were checked against the source.
+Edit outcome: No optional learning edit was needed for the recap. The actual reset-recovery correction and isolated fulfillment regression were kept and verified as review work.
+Reflection: One optional transfer question was offered; no response has been recorded. It is not a completion requirement. Any later personal response belongs only in the ignored learner profile.
+Activity mode: Evidence-based brief recap, delivered 2026-10-25. The updated focus supersedes the earlier planned moved-table exercise because the learner's controlled A/B decision provides stronger current evidence.
+Map evidence: Standalone `devpost/app-map.html` uses source checkpoint `aa5a2bdf5ecfebdee14d5292d6547bb76ba140cc`. Verified all local links/anchors, offline loading with JavaScript disabled, keyboard navigation, 1440px/390px layouts and no network/runtime errors. Screenshots were inspected; the file was linked in chat and queued for opening in Codex. Essential content uses inline CSS/HTML only. This wrap-up is complete; final hands-on readiness remains open above, and `6-ship` has not started.
 
 ## Revisions
+
+- Verified implementation checkpoint: `aa5a2bd` — `Add café studio with controlled A/B flow diagnostics`. Includes the approved visual/café/diagnostic refinements, assets/prompts/font license and tests. Reviewed/staged 71 intended project files, including 55 strict UTF-8 text files; no private profile, credentials or local tooling were included. Only `.agents/`, `.claude/` and `agent/` remain unrelated/untracked. This is a local commit; nothing was pushed or published.
+- Learning wrap-up/app map completed as the brief evidence-based recap recorded above. The source checkpoint is fixed in the offline map so later changes can be checked for drift. The learner's current request authorizes the verified checkpoint, but does not report new hands-on observations or explicitly confirm ready to ship; preserve that distinction when resuming `5-build`.
 
 - Final A/B technical review (2026-10-25): traced Start example → run A → Apply B → run B → comparison/hotspot preview and confirmed the variants keep 12 seats, all other inventory and fixed conditions. Rechecked snapshot-bound diagnosis, completion/capacity cautions, zero/missing data, Stop, Undo, preview locks and reload. B remains a trade-off: faster drink readiness/staff travel with higher customer obstruction; no overall winner or café forecast is claimed.
 - Review fix: when an incompatible baseline was cleared but a valid latest survived, the UI advised starting a new comparison while disabling that action. Reset now requires at least one retained result. The browser regression reproduced the disabled action before the fix, then verified Cancel preserves latest and Confirm clears results while retaining the working layout.

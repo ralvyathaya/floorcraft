@@ -13,6 +13,8 @@ npm run dev -- --host 127.0.0.1 --port 5173 --strictPort
 
 Open <http://127.0.0.1:5173>.
 
+For a code reference, open [the offline app map](devpost/app-map.html) directly. It includes the controlled A/B route, snapshot/diagnosis boundaries, verification commands and a source checkpoint; no server or scripts are needed to read it.
+
 ## Verify
 
 ```bash
