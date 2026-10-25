@@ -102,7 +102,7 @@ Open `http://127.0.0.1:5173`. For production verification, run `npm run build`, 
 Use a public GitHub repository and Pages' built-in Git integration, not a separate deployment API or GitHub Actions workflow. Repository creation, authorization, and pushes occur only when authorized during build/ship; this document does not provision anything.
 
 - Repository root: application root, alongside `devpost/`.
-- Production branch: `main` (or explicitly record the actual branch if different).
+- Production branch: `master` (actual public repository default confirmed during 6-ship; no Pages deployment is provisioned yet).
 - Framework preset: React (Vite).
 - Build command: `npm run build`.
 - Output directory: `dist`.
@@ -118,6 +118,8 @@ Local saves belong to one browser origin: localhost, preview deployments, and th
 ### Recording and Public Verification
 
 Submission still requires a short demo video and public GitHub repository; a deployed URL is additional. Show baseline -> furniture move -> rerun -> compare metrics and read-only previews. Record locally if hosting is unavailable. Before sharing, verify the public URL without a logged-in session and inspect the public repository for personal context or credentials.
+
+Shipping evidence, 2026-10-25: the existing repository is https://github.com/ralvyathaya/floorcraft , verified public by the GitHub connector and anonymous HTTP/API reads. Its default branch is `master`, currently remote `b5a546e`; the reviewed implementation remains on local `codex/floorcraft-visual-polish` pending explicit push authorization. No repository recreation or visibility change is needed. The current tree and reachable history were checked for selected credential/private-context patterns; the ignored learner profile and its reflection are excluded. No root project license is present; license choice is pending learner agreement. See `checklist.md > Shipping — 6-ship` for verification and remaining publication tasks. Demo-video and deployed-app URLs have not yet been supplied/verified; the authenticated Devpost form has not been inspected. Do not invent URLs, submission status or learner-authored answers.
 
 ## Look and Feel
 
