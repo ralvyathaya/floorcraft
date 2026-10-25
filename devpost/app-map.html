@@ -43,7 +43,7 @@
   <header>
     <h1>FloorCraft · App map</h1>
     <p>A local reference for changing a café layout, running the same modeled rush, and inspecting completion, seating and circulation trade-offs.</p>
-    <p class="meta">Snapshot: 25 October 2026 · Source commit: <code id="source-commit">aa5a2bdf5ecfebdee14d5292d6547bb76ba140cc</code>.<br>This guide can drift as the code changes. All content works offline, without scripts.</p>
+    <p class="meta">Snapshot: 25 October 2026 · Source commit: <code id="source-commit">47db148269d8ce214130f717866f8cf0097404a3</code>.<br>This guide can drift as the code changes. All content works offline, without scripts.</p>
     <nav aria-label="App map sections"><a href="#pieces">Main pieces</a><a href="#route">Code route</a><a href="#practice">Practice to reuse</a><a href="#run">Run again</a></nav>
   </header>
 
@@ -91,6 +91,7 @@
       <li><strong>Preset seating or the A/B position:</strong> <a href="../src/app/presets.js"><code>cafePresets</code></a> and <code>caseStudy.layouts</code>. Check access, fixed demand and capacity before interpreting metrics.</li>
       <li><strong>Diagnostic definitions:</strong> <code>deriveDiagnostics</code> and <a href="../tests/diagnostics.test.js"><code>tests/diagnostics.test.js</code></a>. Preserve the produced-order denominator and unavailable-data behavior.</li>
       <li><strong>Floor rendering or hit areas:</strong> <a href="../src/components/FloorplanCanvas.jsx"><code>FloorplanCanvas</code></a>, <a href="../src/components/isometric.js"><code>isometric.js</code></a>, and <a href="../src/components/Furniture.jsx"><code>Furniture</code></a>. Artwork height is presentation; footprints remain physical geometry.</li>
+      <li><strong>Furniture facing the wrong direction:</strong> <a href="../src/components/cafeAssets.js"><code>artForFurniture</code></a> selects quarter-turn crops from <a href="../src/assets/furniture-atlas.json"><code>furniture-atlas.json</code></a>. The chair-frame regression in <a href="../tests/artwork.test.js"><code>tests/artwork.test.js</code></a> protects the visually audited south/west/north/east sequence for all three themes.</li>
       <li><strong>Spacing and results copy:</strong> <a href="../src/styles.css"><code>src/styles.css</code></a>, <code>FlowDiagnostics</code> and <code>ComparisonPanel</code>. Retain preview identity, failure cautions, keyboard focus and the fixed heat scale.</li>
     </ul>
   </section>
