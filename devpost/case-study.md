@@ -4,7 +4,7 @@ This is a reproducible FloorCraft model experiment. No café owner/barista has r
 
 ## Public reference and attribution
 
-Dwi Liza Handayani and Ivo Ramadhani, **Redesain Interior Cafe Ruang Rasa Dengan Konsep Minimalis Industrial** (2025), RIGGS 4(4), pp. 4093–4106. [Article and license](https://journal.ilmudata.co.id/index.php/RIGGS/article/view/4133), [paper](https://journal.ilmudata.co.id/index.php/RIGGS/article/download/4133/2978/24800), DOI [10.31004/riggs.v4i4.4133](https://doi.org/10.31004/riggs.v4i4.4133). The publication states **CC BY 4.0**; retain author, title, source and adaptation notice when sharing this case.
+Dwi Liza Handayani and Ivo Ramadhani, **Redesain Interior Cafe Ruang Rasa Dengan Konsep Minimalis Industrial** (2025; English translation: **Interior Redesign of Café Ruang Rasa with a Minimalist Industrial Concept**), RIGGS 4(4), pp. 4093–4106. [Article and license](https://journal.ilmudata.co.id/index.php/RIGGS/article/view/4133), [paper](https://journal.ilmudata.co.id/index.php/RIGGS/article/download/4133/2978/24800), DOI [10.31004/riggs.v4i4.4133](https://doi.org/10.31004/riggs.v4i4.4133). The publication states **CC BY 4.0**; retain author, title, source and adaptation notice when sharing this case.
 
 Figures 4–5 on printed page 4096 show before/after layouts. The accompanying text identifies a 10 × 15m building and a constrained 3 × 8m indoor area. These published circulation constraints motivate examining how service placement affects movement. They do not establish measured queues, staffing, customer demand, drink times or a FloorCraft result. Original drawings remain linked at their source; the app uses its own schematic geometry and existing artwork.
 
