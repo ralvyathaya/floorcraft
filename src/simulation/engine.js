@@ -3,6 +3,7 @@ import { buildQueues, joinQueue, queueTarget, releaseCustomer } from './queues.j
 import { resolveMovements } from './movement.js';
 import { deriveMetrics } from './metrics.js';
 import { canonicalSignature } from './layout.js';
+import { createCafeRun, stepCafe, finishCafe } from './cafeEngine.js';
 
 export const layoutSignature = canonicalSignature;
 
@@ -19,6 +20,7 @@ function terminate(run, customer, outcome, tick = run.tick) {
 }
 
 export function createRun(layout, scenario) {
+  if (layout.modelId === 'cafe-v2') return createCafeRun(layout, scenario);
   const captured = structuredClone(layout);
   const map = buildNavigationMap(captured);
   return {
@@ -94,6 +96,7 @@ function serviceTick(run, customer) {
 }
 
 export function step(run) {
+  if (run.layout.modelId === 'cafe-v2') return stepCafe(run);
   if (run.done) return run;
   const { map, scenario } = run;
   const occupied = new Set(run.customers.filter((c) => c.cell && !c.outcome).map((c) => cellKey(c.cell)));
@@ -206,6 +209,7 @@ export function step(run) {
 }
 
 export function finish(run) {
+  if (run.layout.modelId === 'cafe-v2') return finishCafe(run);
   if (!run.done) throw new Error('Cannot publish an incomplete simulation');
   return structuredClone({
     engineVersion: run.scenario.engineVersion, scenarioVersion: run.scenario.version,

@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FloorCraft · App map</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui, sans-serif; color: #29382f; background: #f5f3eb; font-size: 15px; line-height: 1.55; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    main { max-width: 1040px; margin: auto; padding: 32px 24px 48px; }
+    h1, h2, h3 { line-height: 1.25; }
+    h1 { margin: 0 0 12px; font-size: 30px; letter-spacing: -.03em; }
+    h2 { margin: 0 0 16px; font-size: 21px; }
+    h3 { margin: 0 0 8px; font-size: 16px; }
+    p { margin: 8px 0 14px; }
+    a { color: #315b4b; text-underline-offset: 3px; overflow-wrap: anywhere; }
+    a:focus-visible, summary:focus-visible { outline: 3px solid #526eab; outline-offset: 4px; }
+    code { font-family: ui-monospace, Consolas, monospace; font-size: .88em; overflow-wrap: anywhere; }
+    pre { padding: 16px; background: #edf0e7; border-radius: 8px; white-space: pre-wrap; }
+    section { padding: 24px 0; border-top: 1px solid #d4dbcd; }
+    nav { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 20px 0; }
+    nav a { display: inline-flex; align-items: center; min-height: 44px; }
+    .meta { color: #546451; font-size: 13px; }
+    .pieces, .flow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .card, .flow > div { background: #fffef8; border: 1px solid #d4dbcd; border-radius: 10px; padding: 16px; }
+    .card p, .flow p { margin-bottom: 0; }
+    .flow > div { border-top: 4px solid #8b9c7c; }
+    .flow strong { display: block; margin-bottom: 8px; }
+    .route { padding-left: 24px; }
+    .route > li { margin: 0 0 24px; padding-left: 4px; }
+    .route p { margin-bottom: 8px; }
+    .result { border-left: 4px solid #8b9c7c; padding: 4px 0 4px 16px; }
+    ul { padding-left: 22px; }
+    li { margin: 10px 0; }
+    details { background: #edf0e7; padding: 14px 16px; border-radius: 8px; }
+    summary { cursor: pointer; min-height: 28px; }
+    @media (max-width: 680px) { main { padding: 24px 16px; } .pieces, .flow { grid-template-columns: 1fr; } h1 { font-size: 27px; } }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>FloorCraft · App map</h1>
+    <p>A local reference for changing a café layout, running the same modeled rush, and inspecting completion, seating and circulation trade-offs.</p>
+    <p class="meta">Snapshot: 25 October 2026 · Source commit: <code id="source-commit">47db148269d8ce214130f717866f8cf0097404a3</code>.<br>This guide can drift as the code changes. All content works offline, without scripts.</p>
+    <nav aria-label="App map sections"><a href="#pieces">Main pieces</a><a href="#route">Code route</a><a href="#practice">Practice to reuse</a><a href="#run">Run again</a></nav>
+  </header>
+
+  <section id="pieces" aria-labelledby="pieces-title">
+    <h2 id="pieces-title">Main pieces</h2>
+    <div class="pieces">
+      <article class="card"><h3>Edit</h3><p><code>App</code> coordinates the workspace. <code>FloorplanCanvas</code> projects footprints into isometric view; placement validation and the reducer accept changes and retain Undo.</p></article>
+      <article class="card"><h3>Simulate</h3><p><code>useSimulation</code> advances fixed engine ticks. The café model keeps customers, seats, orders and staff separate. Playback speed changes presentation, not the scenario.</p></article>
+      <article class="card"><h3>Compare &amp; recover</h3><p>Completed baseline/latest snapshots carry their own layouts. Results and diagnostics use those snapshots. <code>storage.js</code> validates browser-local saves; no backend or runtime AI service is involved.</p></article>
+    </div>
+  </section>
+
+  <section aria-labelledby="action-title">
+    <h2 id="action-title">One action: Show on tested layout</h2>
+    <div class="flow" aria-label="Action flows from diagnostic button to captured preview to floor outline">
+      <div><strong>1 → Choose an area</strong><code>FlowDiagnostics</code><p>The button sends the captured snapshot, baseline/latest identity and the ranked area's cells.</p></div>
+      <div><strong>2 → Select its snapshot</strong><code>App.showDiagnostic</code><p><code>SET_VIEW</code> opens the matching read-only preview and enables heat. The working layout stays intact.</p></div>
+      <div><strong>3 → Outline the floor</strong><code>FloorplanCanvas</code><p><code>diagnosticArea</code> draws the actual projected cells in the non-interactive ground layer. Pan and zoom retain alignment.</p></div>
+    </div>
+    <p class="meta">The area selection is temporary. Only layout and completed baseline/latest snapshots are saved under <code>floorcraft.workspace.v1</code>; diagnosis is derived again after reload.</p>
+  </section>
+
+  <section id="route" aria-labelledby="route-title">
+    <h2 id="route-title">Reference route · three stops</h2>
+    <p>This route is for future navigation; it does not claim an interactive code tour was completed.</p>
+    <ol class="route">
+      <li><h3>Define and apply the controlled change</h3>
+        <p><a href="../src/app/caseStudy.js"><code>src/app/caseStudy.js</code></a> · <code>caseStudy</code>, <code>identifyCaseVariant</code><br><a href="../src/app/workspace.js"><code>src/app/workspace.js</code></a> · <code>workspaceReducer</code>, <code>APPLY_CASE_B</code></p>
+        <p>A and B clone the same 12-seat inventory. Only pickup moves from (8, 2)m to (5, 2)m. Applying B adds one Undo step and retains the baseline; starting the example clears results only after the UI's confirmation.</p>
+      </li>
+      <li><h3>Run, then capture evidence</h3>
+        <p><a href="../src/app/useSimulation.js"><code>src/app/useSimulation.js</code></a> · <code>useSimulation</code>, <code>start</code><br><a href="../src/app/workspace.js"><code>workspaceReducer</code></a> · <code>RUN_COMPLETED</code></p>
+        <p>The runner uses <code>createRun → step → finish</code>, then dispatches a completed snapshot. Stop/error preserve earlier results. <a href="../src/app/storage.js"><code>createSaveDocument</code> / <code>loadWorkspace</code></a> save and validate recoverable data; no partial run is saved.</p>
+      </li>
+      <li><h3>Explain and locate the result</h3>
+        <p><a href="../src/simulation/diagnostics.js"><code>src/simulation/diagnostics.js</code></a> · <code>deriveDiagnostics</code><br><a href="../src/App.jsx"><code>src/App.jsx</code></a> · <code>showDiagnostic</code></p>
+        <p>The pure calculation separates production queue from preparation/delivery for the same produced orders, then ranks connected blocked-travel cells. <a href="../src/components/FlowDiagnostics.jsx"><code>FlowDiagnostics</code></a> shows evidence; <a href="../src/components/ComparisonPanel.jsx"><code>ComparisonPanel</code></a> keeps completion and capacity context first. Missing historical timing stays unavailable.</p>
+      </li>
+    </ol>
+  </section>
+
+  <section aria-labelledby="change-title">
+    <h2 id="change-title">To change this, start here</h2>
+    <ul>
+      <li><strong>Preset seating or the A/B position:</strong> <a href="../src/app/presets.js"><code>cafePresets</code></a> and <code>caseStudy.layouts</code>. Check access, fixed demand and capacity before interpreting metrics.</li>
+      <li><strong>Diagnostic definitions:</strong> <code>deriveDiagnostics</code> and <a href="../tests/diagnostics.test.js"><code>tests/diagnostics.test.js</code></a>. Preserve the produced-order denominator and unavailable-data behavior.</li>
+      <li><strong>Floor rendering or hit areas:</strong> <a href="../src/components/FloorplanCanvas.jsx"><code>FloorplanCanvas</code></a>, <a href="../src/components/isometric.js"><code>isometric.js</code></a>, and <a href="../src/components/Furniture.jsx"><code>Furniture</code></a>. Artwork height is presentation; footprints remain physical geometry.</li>
+      <li><strong>Furniture facing the wrong direction:</strong> <a href="../src/components/cafeAssets.js"><code>artForFurniture</code></a> selects quarter-turn crops from <a href="../src/assets/furniture-atlas.json"><code>furniture-atlas.json</code></a>. The chair-frame regression in <a href="../tests/artwork.test.js"><code>tests/artwork.test.js</code></a> protects the visually audited south/west/north/east sequence for all three themes.</li>
+      <li><strong>Spacing and results copy:</strong> <a href="../src/styles.css"><code>src/styles.css</code></a>, <code>FlowDiagnostics</code> and <code>ComparisonPanel</code>. Retain preview identity, failure cautions, keyboard focus and the fixed heat scale.</li>
+    </ul>
+  </section>
+
+  <section id="practice" aria-labelledby="practice-title">
+    <h2 id="practice-title">A practice to reuse</h2>
+    <p>Turn “make the layout better” into one observable question: keep demand and 12 seats fixed, move only pickup, and compare completion before time savings.</p>
+    <p class="result">In the measured model, A and B both complete 24/24 journeys and fulfill 12/18 dine-in requests. B reduces order-to-ready from 314.3s to 250.9s and barista travel from 240m to 96m, while movement obstruction rises from 2.0% to 3.2%. This is a trade-off, not a universal winner.</p>
+    <p><a href="../tests/caseStudy.test.js"><code>tests/caseStudy.test.js</code></a> verifies equal inventory, a single changed object, determinism and non-mutating diagnosis. <a href="../tests/e2e/diagnostics.spec.js"><code>tests/e2e/diagnostics.spec.js</code></a> exercises the visible A/B journey, preview identity, recovery and locks. Use the same pattern elsewhere: fixed inputs → one change → executable check → qualified conclusion.</p>
+    <details><summary>What this evidence does not establish</summary><p>The model uses illustrative demand, service times, role zones and shared seating. The <a href="case-study.md">public-plan case study</a> records source facts separately from adaptations. Neither the example nor automated browser checks establish real café performance or café-user validation.</p></details>
+  </section>
+
+  <section id="run" aria-labelledby="run-title">
+    <h2 id="run-title">Run again</h2>
+    <p>From the repository root, use the recorded Node <strong>24.22.0</strong> runtime. Dependencies are pinned in the lockfile.</p>
+    <pre><code>npm ci
+npm run dev -- --host 127.0.0.1 --port 5173 --strictPort</code></pre>
+    <p>Open <code>http://127.0.0.1:5173</code>. For a built preview, run:</p>
+    <pre><code>npm test
+npm run test:e2e
+npm run build
+npm run preview -- --host 127.0.0.1 --port 4173 --strictPort</code></pre>
+    <p>Playwright needs Chromium installed (<code>npx playwright install chromium</code> if needed). Browser-local saves belong to their origin; localhost and 127.0.0.1 have separate storage.</p>
+    <p class="meta">Reopen this guide directly as <code>devpost/app-map.html</code>. It is a standalone local artifact, with no network resources, scripts or build step. Submission/demo work belongs to the later <code>6-ship</code> workflow.</p>
+  </section>
+</main>
+</body>
+</html>

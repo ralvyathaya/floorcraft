@@ -12,8 +12,13 @@ export const initialLayout = {
 };
 
 // Geometry only: insertion order and decorative labels cannot change a test's identity.
-export function canonicalSignature({ room, portal, objects }) {
+export function canonicalSignature({ room, portal, objects, modelId, tableGroups, staffZone, waitingZone }) {
   return JSON.stringify({
+    ...(modelId === 'cafe-v2' ? { modelId,
+      tableGroups: tableGroups.map(({ id, tableId, chairIds }) => ({ id, tableId, chairIds: [...chairIds].sort() })).sort((a, b) => a.id.localeCompare(b.id)),
+      staffZone: { x: staffZone.x, y: staffZone.y, width: staffZone.width, height: staffZone.height },
+      waitingZone: { x: waitingZone.x, y: waitingZone.y, width: waitingZone.width, height: waitingZone.height },
+    } : {}),
     room: { width: room.width, height: room.height, cellSize: room.cellSize },
     portal: { x: portal.x, y: portal.y, width: portal.width, height: portal.height, kind: portal.kind },
     objects: [...objects].sort((a, b) => a.id.localeCompare(b.id)).map(({ id, type, x, y, width, height, serviceFace }) => ({ id, type, x, y, width, height, serviceFace })),

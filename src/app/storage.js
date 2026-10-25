@@ -1,14 +1,10 @@
 import { canonicalSignature } from './workspace.js';
 import { createScenario } from '../simulation/scenario.js';
 import { validatePlacement } from '../simulation/navigation.js';
+import { validObjectInventory } from './presets.js';
 
 export const STORAGE_KEY = 'floorcraft.workspace.v1';
 export const STORAGE_SCHEMA_VERSION = 1;
-const scenario = createScenario();
-const expectedTypes = new Map([
-  ['cashier', 'counter'], ['pickup', 'counter'], ['table-a', 'table'], ['table-b', 'table'],
-  ['chair-a', 'chair'], ['chair-b', 'chair'],
-]);
 
 const isRecord = (value) => Boolean(value && typeof value === 'object' && !Array.isArray(value));
 const finite = (value) => typeof value === 'number' && Number.isFinite(value);
@@ -17,15 +13,20 @@ const finiteOrNull = (value) => value === null || finite(value);
 function validLayout(layout) {
   if (!isRecord(layout) || !isRecord(layout.room) || !isRecord(layout.portal) || !Array.isArray(layout.objects)) return false;
   if (![layout.room.width, layout.room.height, layout.room.cellSize].every(finite) || layout.room.width <= 0 || layout.room.height <= 0 || layout.room.cellSize <= 0) return false;
+  if (layout.room.width !== 10 || layout.room.height !== 8 || layout.room.cellSize !== 0.5 || layout.modelId !== undefined && layout.modelId !== 'cafe-v2') return false;
   if (![layout.portal.x, layout.portal.y, layout.portal.width, layout.portal.height].every(finite)) return false;
   if (layout.portal.width <= 0 || layout.portal.height <= 0 || layout.portal.x < 0 || layout.portal.y < 0 || layout.portal.x + layout.portal.width > layout.room.width || layout.portal.y + layout.portal.height > layout.room.height) return false;
-  if (layout.objects.length !== expectedTypes.size) return false;
+  if (!validObjectInventory(layout.objects)) return false;
+  if ((layout.objects.length > 12) !== (layout.modelId === 'cafe-v2')) return false;
+  if (!layout.modelId && [layout.tableGroups, layout.staffZone, layout.waitingZone].some(value => value !== undefined)) return false;
+  if (layout.themeId !== undefined && !['oak', 'industrial', 'terracotta'].includes(layout.themeId)) return false;
   const ids = new Set();
   for (const object of layout.objects) {
-    if (!isRecord(object) || ids.has(object.id) || expectedTypes.get(object.id) !== object.type) return false;
+    if (!isRecord(object) || ids.has(object.id)) return false;
     ids.add(object.id);
     if (![object.x, object.y, object.width, object.height].every(finite) || object.width <= 0 || object.height <= 0) return false;
     if (object.serviceFace !== undefined && !['north', 'south', 'east', 'west'].includes(object.serviceFace)) return false;
+    if (object.rotation !== undefined && ![0, 90, 180, 270].includes(object.rotation)) return false;
   }
   return validatePlacement(layout, null).valid && canonicalSignature(layout) === canonicalSignature({ ...layout, objects: layout.objects.map((object) => ({ ...object, label: 'ignored' })) });
 }
@@ -39,7 +40,8 @@ function validMetrics(metrics, scheduled) {
   return Object.values(metrics.failures).reduce((sum, count) => sum + count, 0) + metrics.completed === scheduled;
 }
 
-function validSnapshot(snapshot, layout) {
+function validSnapshot(snapshot) {
+  const scenario = createScenario(snapshot?.layout);
   if (!isRecord(snapshot) || snapshot.engineVersion !== scenario.engineVersion || snapshot.scenarioVersion !== scenario.version || !validLayout(snapshot.layout)) return false;
   if (canonicalSignature(snapshot.layout) !== snapshot.signature || !Number.isInteger(snapshot.runNumber) || snapshot.runNumber < 1 || !Number.isInteger(snapshot.elapsedTicks) || snapshot.elapsedTicks < 0 || !validMetrics(snapshot.metrics, scenario.customers.length)) return false;
   if (!Array.isArray(snapshot.outcomes) || snapshot.outcomes.length !== scenario.customers.length) return false;
@@ -48,6 +50,16 @@ function validSnapshot(snapshot, layout) {
   if (snapshot.outcomes.some((outcome) => !isRecord(outcome) || !['completed', 'unreachable', 'stuck', 'timed-out'].includes(outcome.outcome))) return false;
   const completed = snapshot.outcomes.filter((outcome) => outcome.outcome === 'completed').length;
   if (completed !== snapshot.metrics.completed) return false;
+  if (snapshot.layout.modelId === 'cafe-v2') {
+    const m = snapshot.metrics;
+    if (!['seatingCapacity', 'dineInRequested', 'dineInServed', 'switchedToTakeaway'].every(k => Number.isInteger(m[k]) && m[k] >= 0) || m.seatingCapacity !== snapshot.layout.objects.filter(o => o.type === 'chair').length || m.dineInRequested !== 18 || m.dineInServed > Math.min(m.completed, m.dineInRequested) || m.switchedToTakeaway > m.dineInRequested || !finiteOrNull(m.averageOrderToReadySeconds) || !finite(m.baristaWalkingMeters) || m.baristaWalkingMeters < 0) return false;
+    if (!Array.isArray(snapshot.orders) || snapshot.orders.length > 24 || new Set(snapshot.orders.map(o => o?.customerId)).size !== snapshot.orders.length || snapshot.orders.some(o => !isRecord(o) || !ids.has(o.customerId) || !['collected', 'cancelled'].includes(o.status) || !Number.isInteger(o.submittedTick) || o.submittedTick < 0 || o.readyTick !== null && (!Number.isInteger(o.readyTick) || o.readyTick < o.submittedTick) || o.status === 'collected' && (!Number.isInteger(o.collectedTick) || o.collectedTick < o.readyTick || o.readyTick === null))) return false;
+    if (snapshot.orders.filter(o => o.status === 'collected').length < m.completed) return false;
+    if (!Array.isArray(snapshot.staff) || snapshot.staff.length !== 2 || !['barista', 'cashier-staff'].every(id => snapshot.staff.some(s => isRecord(s) && s.id === id && isRecord(s.cell) && Number.isInteger(s.cell.x) && Number.isInteger(s.cell.y) && s.cell.x >= 0 && s.cell.y >= 0 && s.cell.x < 20 && s.cell.y < 16))) return false;
+    if (!Array.isArray(snapshot.seats) || snapshot.seats.length !== m.seatingCapacity || snapshot.seats.some(s => !isRecord(s) || s.customerId !== null || s.status !== 'empty')) return false;
+    if (snapshot.outcomes.filter(o => o.wasSeated && o.outcome === 'completed').length !== m.dineInServed || snapshot.outcomes.filter(o => o.requestedMode === 'dine-in' && o.effectiveMode === 'takeaway').length !== m.switchedToTakeaway) return false;
+  }
+  const layout = snapshot.layout;
   if (!Array.isArray(snapshot.heatmap) || snapshot.heatmap.length !== layout.room.width / layout.room.cellSize * (layout.room.height / layout.room.cellSize)) return false;
   if (snapshot.heatmap.some((cell) => !isRecord(cell) || !Number.isInteger(cell.x) || !Number.isInteger(cell.y) || !Number.isFinite(cell.ticks) || cell.ticks < 0)) return false;
   return true;
@@ -77,7 +89,7 @@ export function loadWorkspace(storage) {
   const results = {};
   for (const key of ['baseline', 'latest']) {
     if (document[key] === null) results[key] = null;
-    else if (validSnapshot(document[key], document.workingLayout)) results[key] = structuredClone(document[key]);
+    else if (validSnapshot(document[key])) results[key] = structuredClone(document[key]);
     else { results[key] = null; message = message ? `${message} ${key} and other incompatible completed results were cleared.` : `Incompatible ${key} completed results were cleared; the working layout was kept.`; }
   }
   return { kind: 'loaded', workspace: { workingLayout: structuredClone(document.workingLayout), baseline: results.baseline, latest: results.latest }, raw: read.raw, message };

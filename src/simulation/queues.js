@@ -1,13 +1,13 @@
 import { cellKey, neighbors, portalCell, serviceCell } from './navigation.js';
 
-export function buildQueues(layout, map) {
+export function buildQueues(layout, map, capacity = 12) {
   const portal = portalCell(layout);
   const heads = Object.fromEntries(['cashier', 'pickup'].map((id) => [id, serviceCell(layout, layout.objects.find((object) => object.id === id))]));
   const reserved = new Set([cellKey(portal), ...Object.values(heads).map(cellKey)]);
   const queues = {};
   for (const id of ['cashier', 'pickup']) {
     const lane = [heads[id]];
-    while (lane.length < 12) {
+    while (lane.length < capacity) {
       const candidates = neighbors(map, lane.at(-1)).filter((cell) => !reserved.has(cellKey(cell)));
       candidates.sort((a, b) => (Math.abs(a.x - portal.x) + Math.abs(a.y - portal.y)) - (Math.abs(b.x - portal.x) + Math.abs(b.y - portal.y)));
       if (!candidates.length) break;

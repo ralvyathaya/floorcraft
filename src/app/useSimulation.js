@@ -3,11 +3,16 @@ import { createRun, finish, step } from '../simulation/engine.js';
 import { createScenario } from '../simulation/scenario.js';
 import { advanceClock, createClock, presentationFrame } from './clock.js';
 
-export function useSimulation({ onComplete, onError }) {
+export function useSimulation({ onComplete, onError, pace = 8 }) {
   const runner = useRef(null);
   const frame = useRef(null);
   const handlers = useRef({ onComplete, onError });
   handlers.current = { onComplete, onError };
+  const speed = useRef(pace);
+  useEffect(() => {
+    speed.current = pace;
+    if (runner.current) runner.current.clock = createClock(performance.now());
+  }, [pace]);
   const [view, setView] = useState(null);
 
   function stop() {
@@ -22,7 +27,7 @@ export function useSimulation({ onComplete, onError }) {
     stop();
     let run;
     try {
-      run = createRun(layout, createScenario());
+      run = createRun(layout, createScenario(layout));
     } catch (error) {
       handlers.current.onError(error);
       return;
@@ -32,7 +37,7 @@ export function useSimulation({ onComplete, onError }) {
     const loop = (now) => {
       const active = runner.current;
       if (!active || active.token !== token) return;
-      const result = advanceClock(active.clock, now, document.hidden);
+      const result = advanceClock(active.clock, now, document.hidden, speed.current);
       active.clock = result.clock;
       let ticks = result.steps;
       try {
@@ -40,7 +45,7 @@ export function useSimulation({ onComplete, onError }) {
         const presentation = presentationFrame(active.snap, result.steps, active.clock.carry);
         active.snap = presentation.snap;
         const alpha = run.done ? 1 : presentation.alpha;
-        setView({ tick: run.tick, alpha, customers: structuredClone(run.customers), queues: run.queues, heatmap: run.heatmap });
+        setView({ tick: run.tick, alpha, customers: structuredClone(run.customers), staff: run.staff && structuredClone(run.staff), seats: run.seats && structuredClone(run.seats), orders: run.orders && structuredClone(run.orders), queues: run.queues, heatmap: run.heatmap });
         if (run.done) {
           runner.current = null;
           frame.current = null;
