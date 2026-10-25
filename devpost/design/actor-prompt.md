@@ -1,0 +1,13 @@
+# Café actor atlas — 2026-10-25
+
+Generated with the built-in `image_gen` tool, using `src/assets/cafe-customers.png` as the style/identity reference. No CLI fallback. Selected original copied unchanged to `src/assets/cafe-actors.png` (1122 × 1402 RGBA, 1,135,184 bytes).
+
+Runtime crops/directions/anchors are in `src/assets/actor-atlas.json`. The renderer crops the original image without changing its alpha. Columns, verified against the image: world east/south/west/north (screen lower-right/lower-left/upper-left/upper-right). Prompt direction names below are preserved verbatim; inspected metadata is authoritative. Rows: two seated identities, staff idle, staff carrying a cup, staff preparing. Standing height 1.65 world units, anchor 0.5/0.98; seated height 1.4, anchor 0.5/0.9. Chair ground positions come from engine seating state, not sprite height.
+
+## Exact prompt
+
+Use case: stylized-concept. Generate a transparent PNG sprite atlas for FloorCraft isometric café simulation matching the supplied reference's warm semi-pixel realistic painted game sprites, soft low contrast light from upper left. Reference image: style and two existing customer identities only. 4 columns × 5 rows, twenty separated full-body sprites, perfectly evenly spaced within cells, no text, no grid, no furniture, no chairs rendered. Fixed 2:1 isometric camera, same character scale. Columns in all rows: facing screen lower-right, lower-left, upper-left, upper-right (world south, west, north, east). Rows: 1 the sage jacket customer seated on an invisible café chair, feet on ground and knees naturally bent; 2 the ochre jacket customer similarly seated; 3 barista wearing ivory shirt and muted dark sage apron standing idle; 4 same barista walking holding one small cup on a tray; 5 same barista preparing coffee with hands forward at waist height. Feet and seated ground anchors line up within every cell. Adult human proportions, compact silhouettes. All twenty sprites fully inside their own cells with wide clear transparent gutters. Real alpha background, no background or cast floor shadows, no labels, no watermarks. Do not include the reference atlas itself.
+
+## Local typeface
+
+Inter Variable is bundled at `src/assets/fonts/InterVariable.woff2`, with its original SIL Open Font License at `public/licenses/Inter-OFL.txt`, copied to the production distribution and linked in About this simulation. Sources: [official repository font](https://github.com/rsms/inter/blob/master/docs/font-files/InterVariable.woff2), [license](https://github.com/rsms/inter/blob/master/LICENSE.txt). No runtime font CDN.

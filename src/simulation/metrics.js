@@ -19,20 +19,26 @@ export function compareSnapshots(baseline, latest) {
     return { comparable: false, deltas: {} };
   }
   const before = baseline.metrics; const after = latest.metrics;
+  const knownCapacity = Number.isInteger(before.seatingCapacity) && Number.isInteger(after.seatingCapacity);
+  const capacityChanged = knownCapacity && before.seatingCapacity !== after.seatingCapacity;
   const fewerCompleted = after.completed < before.completed;
+  const fewerDineIn = Number.isFinite(before.dineInServed) && after.dineInServed < before.dineInServed;
   const hasFailures = [before, after].some((metrics) => Object.values(metrics.failures).some((count) => count > 0));
   const deltas = {};
-  for (const [key, unit] of [['averageWaitingSeconds', 's'], ['averageWalkingSeconds', 's'], ['congestionPercent', 'pp'], ['completed', 'customers']]) {
+  const rows = [['averageWaitingSeconds', 's'], ['averageWalkingSeconds', 's'], ['congestionPercent', 'pp'], ['completed', 'customers']];
+  if (before.dineInRequested !== undefined) rows.push(['dineInServed', 'customers'], ['switchedToTakeaway', 'customers'], ['averageOrderToReadySeconds', 's'], ['baristaWalkingMeters', 'm']);
+  for (const [key, unit] of rows) {
     if (!Number.isFinite(before[key]) || !Number.isFinite(after[key])) {
       deltas[key] = { value: null, unit, tone: 'unavailable' };
       continue;
     }
     const value = after[key] - before[key];
-    const improved = key === 'completed' ? value > 0 : value < 0;
-    const tone = value === 0 ? 'unchanged' : improved ? fewerCompleted && key !== 'completed' ? 'caution' : 'improved' : 'worse';
+    const moreIsBetter = ['completed', 'dineInServed'].includes(key);
+    const improved = moreIsBetter ? value > 0 : value < 0;
+    const tone = value === 0 ? 'unchanged' : improved ? (fewerCompleted || fewerDineIn || capacityChanged) && !moreIsBetter ? 'caution' : 'improved' : 'worse';
     deltas[key] = { value, unit, tone };
   }
-  return { comparable: true, fewerCompleted, hasFailures, deltas };
+  return { comparable: true, fewerCompleted, fewerDineIn, hasFailures, capacityChanged, sameCapacity: knownCapacity && !capacityChanged, deltas };
 }
 
 // Absolute thresholds, never normalized to the current run's hottest cell.

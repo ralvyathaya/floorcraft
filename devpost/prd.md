@@ -5,16 +5,25 @@ status: approved
 
 # FloorCraft — Product Requirements
 
-An interactive layout-testing tool for small café owners who want to see how a takeaway shop layout affects customer flow before changing it in real life.
+An interactive layout-testing tool for small self-service café owners/operators, with architects as a secondary conceptual-design audience. Explore seating, customer circulation and barista work before discussing physical changes; results are illustrative model experiments, not operational forecasts or building-code checks.
 
 Source: `scope.md > The Core Loop`, `scope.md > What "Working" Looks Like`.
 
+## Flow Diagnosis and Controlled Case — 2026-10-25
+
+- After a finished run, show Flow diagnostics below completion context. Split order-to-ready into production queue and preparation + delivery using the same produced-order cohort, including drinks followed by failed journeys. These are process intervals, not components of Average waiting time. Show barista distance separately.
+- Group positive obstruction heat into four-neighbor areas; show up to three ranked by accumulated blocked-customer seconds, with stable coordinate tie-breaking. Show on tested layout selects the matching read-only preview and outlines that area's floor cells. It never replaces working edits. Preview identity, fixed heat legend, Pan/Zoom/Fit and reduced motion remain available. Clear the outline on view/edit/run/heat-off changes. No provisional diagnostic is published during running, Stop or error.
+- Report conversions because no seat was free at admission and outside-delay customers/customer-seconds without inventing a per-delay cause. Empty timing/history data means unavailable; zero heat means only no observed blocked travel. No overall smoothness score or automated causal recommendation.
+- A collapsed 12-seat case study provides Start example → run A → Apply B → run B → compare. Reuse Compact's six two-person groups and industrial theme; A pickup `(8,2)`, B `(5,2)`, all other inputs identical. Start is one Undo step and clears comparison results only after explicit confirmation when results exist; Cancel preserves everything. Undo restores layout only. Apply B requires baseline A and preserves baseline/latest, with one Undo step. Lock both actions during running/previews; manual edits are Custom variation. Reconstruct case identity from captured geometry after reload, without another saved history system.
+- Show Same capacity or Different capacity on comparable café results. Different capacities keep supporting favorable deltas cautious; completion and fulfilled dine-in remain primary. The same-capacity takeaway reports observed order-ready and obstruction changes without declaring an overall winner.
+- Attribute Café Ruang Rasa's published 10 × 15m plans to Dwi Liza Handayani and Ivo Ramadhani (2025), CC BY 4.0. Our 10 × 8m, 12-seat scenario is an independently simplified adaptation, not the authors' before/after plans or a validated assessment of the venue. Source facts, assumptions and measured trade-off are recorded in `case-study.md`. No imported plan, operational claims or source-image dependency is added.
+
 ## The Core Journey
 
-1. The user opens FloorCraft and sees a ready-made small takeaway coffee shop on a 2D top-down canvas. The layout includes an entrance, cashier, pickup counter, tables, and chairs.
+1. The user opens FloorCraft and sees Corner Café on an isometric 2.5D canvas. Presets offer 8, 12 or 16 functional seats with distinct material themes. Existing saved layouts open unchanged in their original takeaway model.
 2. The user can select and drag furniture or counters directly on the canvas. Valid placements remain in place. Invalid placements are previewed in red with a short explanation, then snap back to the object's last valid position when released.
 3. The user clicks **Simulate Rush Hour**. Editing is disabled while the simulation runs. A progress indicator and **Stop Simulation** action appear.
-4. A fixed set of simulated customers enters through the entrance and follows the takeaway journey: walk to the cashier, queue, order, walk to pickup, wait for the drink, and exit.
+4. Customers reserve a free seat if requesting dine-in, queue/order at cashier, wait while a visible barista prepares and delivers their drink, collect it at pickup, then sit or exit. Full seating switches the request to takeaway and records the trade-off.
 5. Customers move around furniture and each other without passing through them, forming orderly queues at the cashier and pickup area. The heatmap highlights movement obstruction rather than normal service queueing alone.
 6. When every scheduled customer finishes or is marked unable to complete, the simulation enters **Simulation Complete**. Stuck-customer handling and a finite overall run limit prevent indefinite runs. The sidebar shows average waiting time, congestion, completed customers out of the scheduled total, and customers who failed to finish.
 7. The first completed simulation becomes the baseline. The user can move an object, see that the layout has untested changes, and run the same simulation conditions again.
@@ -28,8 +37,9 @@ Source: `scope.md > The Core Loop`, `scope.md > The POC Boundary`.
 
 FloorCraft uses one desktop-first workspace rather than a multi-screen setup.
 
-- **Header:** Product identity and the current simulation/layout status.
-- **Main canvas:** A large central 2D top-down floorplan showing the café boundary, floor treatment, furniture, counters, entrance, customers, queues, and heatmap when results are available. Objects are directly draggable when editing is enabled.
+- **Header:** Product identity only; the layout badge communicates working/tested/preview state. Remove repeated slogans, projection labels and local-workspace development copy.
+- **Preset cards:** Corner Café, Compact Service and Split Counter above the canvas. Applying a preset is one undoable edit; running and read-only views disable selection.
+- **Main canvas:** A large central isometric café showing cutaway boundaries, textured floor, furniture, counters, entrance, customers, queues, and the matching projected heatmap. Objects are draggable by their floor footprints when editing is enabled.
 - **Bottom toolbar:** Select/Move, Pan, Zoom, Fit to View, Undo, and a Heatmap toggle once simulation results exist.
 - **Right sidebar:** The primary action (**Simulate Rush Hour**), simulation status, progress/stop controls while running, current metrics after completion, baseline/latest comparison, the baseline/latest canvas toggle, and **Start New Comparison**.
 - **Status messaging:** Short, visible explanations for invalid placements, untested layout changes, interrupted runs, and completed simulations.
@@ -42,9 +52,9 @@ Source: `scope.md > What "Working" Looks Like`, `scope.md > Inspiration & Identi
 
 The interface should feel like a polished SaaS product with the interactivity of a simulation game.
 
-- Clean, minimal, professional desktop interface.
-- Neutral off-white and charcoal foundation with one subtle accent color.
-- Canvas styling closer to an architectural floorplan than a generic diagram: recognizable top-down furniture, believable proportions, subtle flooring textures, and soft shadows.
+- Clean, minimal, professional desktop interface. The sidebar opens directly with Simulation, scenario, Run/Stop and results. Comparison deltas occur only in the table; the summary leads with completion and one interpretation. Keep model limits in About this simulation, with failure and stale-result cautions visible.
+- Ivory cards, softened sage framing and warm oak/walnut materials, with restrained brass accents and clear text.
+- Realistic semi-pixel furniture/customer sprites, a textured isometric floor, cutaway walls, believable proportions and gentle shadows. The learner requested lower contrast than the initial concept. Sprite height is presentation, not collision geometry.
 - Customers should be visually distinct and easy to follow, but not overly cartoonish. The playful energy comes from natural movement, queues forming, and congestion appearing through the heatmap.
 - Avoid a cluttered dashboard, loud gamification, or generic AI-app styling.
 - The experience should feel satisfying and game-like without losing credibility as a practical layout tool.
@@ -53,10 +63,25 @@ Source: `scope.md > Inspiration & Identity`.
 
 ## Features and Behavior
 
+### Curated Café Presets
+
+- Corner Café (4 × 2 seats), Compact Service (6 × 2 seats) and Split Counter (4 × 4 seats) share a 10 × 8m room, entrance and fixed scenario. Capacity differs explicitly; no preset is labelled optimal.
+- Selecting a preset preserves baseline/latest snapshots, adds one Undo entry and derives tested/untested status from actual geometry. Manual arrangements display Custom. Presets cannot be applied while running or previewing results.
+- Tables and chairs form movable/rotatable groups with real reserved/occupied seats. Coffee bar is the barista preparation station; equipment remains decoration. Display, planters and bin remain obstacles; the bench is retained only in historical layouts.
+- Legacy six/twelve-object layouts and known-version results restore unchanged. Choosing a preset activates the café model; no automatic conversion or furniture insertion. Save key/schema remain compatible; model versions differ explicitly.
+
+Acceptance criteria:
+
+- [ ] All three presets load, survive refresh and respect edit locks; Undo restores the previous layout without changing captured results.
+- [ ] Isometric drag, invalid feedback, heatmaps and depth ordering match the underlying ground geometry.
+- [ ] Lower averages with fewer completed customers or fulfilled dine-in requests remain cautious. Do not reuse legacy preset results as café-model evidence.
+
 ### Layout Editing and Validation
 
+For café-model seating, clicking any table/chair selects the whole group. Drag/rotation commit all members atomically and add one Undo step. Quarter turns rotate members around the group's top-left bounding anchor. Group bounds are not a solid obstacle. Placement also preserves reachable chair approaches, public service faces, staff-side counter access and a coffee-bar-to-pickup staff route. Fixed staff/public zones are not editable architecture.
+
 - The initial layout is loaded automatically and includes the café boundary, entrance, cashier, pickup counter, tables, and chairs.
-- Users can select and drag supported objects directly on the canvas.
+- Users can select and drag supported objects directly on the canvas. Clicking/tapping a footprint opens a small nonmodal popup with Rotate 90° and Close. Arrow keys select furniture from the focused canvas; Enter opens controls and Escape closes them. Turns keep the x/y anchor, swap width/height, and rotate counter service faces clockwise; each valid turn is one Undo step. Invalid turns retain the layout and explain why. Controls close on outside click, drag, preset/view/tool changes or starting a run.
 - Select/Move, Pan, Zoom, Fit to View, and Undo are available in the bottom toolbar.
 - An object may not overlap another object, leave the floorplan, or completely block access to the cashier, pickup counter, or exit.
 - During a drag, a placement that violates those rules is shown in red with a short explanation.
@@ -64,7 +89,7 @@ Source: `scope.md > Inspiration & Identity`.
 - Tight layouts that remain accessible are valid; the app does not reject a layout merely because it may create congestion.
 - Layout editing is disabled while a simulation is running.
 - Baseline and latest tested layouts are read-only previews. Users return to the current editable layout to make changes; previewing never replaces that layout.
-- After a completed run, any layout edit marks the current layout as **Untested changes** until another simulation completes.
+- After a completed run, edits to collision geometry or service face mark the current layout as **Untested changes** until another simulation completes. Appearance-only changes retain tested status.
 
 Acceptance criteria:
 
@@ -72,16 +97,18 @@ Acceptance criteria:
 - [ ] Overlap, out-of-bounds, and critical-access-blocking placements are visibly rejected and restored to the previous valid position.
 - [ ] A tight but accessible placement remains allowed.
 - [ ] The canvas cannot be edited during a running simulation.
-- [ ] Editing after a completed run visibly marks the layout as untested.
+- [ ] Geometry/service-face edits after a completed run visibly mark the layout as untested; appearance-only edits retain tested status.
 
 ### Rush-Hour Simulation
 
 - The user starts a run with **Simulate Rush Hour**.
 - Each run uses the same scheduled customer arrival pattern, service times, and other fixed conditions so layout changes are the meaningful variable in a comparison.
-- Each customer follows the same takeaway journey: entrance → cashier queue → order → pickup queue/wait → exit.
+- Café model: 24 solo customers, 18 requesting dine-in and 6 takeaway, arrivals every 15s. Reserve a reachable seat at admission; full seating changes to takeaway. Customers may share tables. Ordering takes 6s, production 30s plus barista walking, collection 2s, and seated dwell 10min; finite limit 45min. These are illustrative assumptions.
+- A stationary cashier takes orders. One visible barista processes FIFO tickets at coffee bar, walks to deliver each drink at the staff side of pickup, then returns for the next. Only ready orders join physical customer pickup service. Customers waiting for production use reserved floor positions; if waiting space is full, outside admission is delayed and counted.
+- Customers reach a walkable chair approach before becoming seated on its blocked furniture footprint. On departure they reserve a free approach before rejoining movement and releasing the seat. Seating/production waits do not trigger movement-stuck failures. Failures release seats, floor reservations and unfinished tickets.
 - Walking time and actual ordering time do not count as waiting time.
-- Waiting time is the time spent queueing at the cashier plus waiting for the drink at pickup.
-- Tables and chairs are obstacles that affect movement; customers do not sit in this proof of concept.
+- Waiting includes stationary cashier/pickup queueing and drink production waits; it excludes actual walking, ordering, collecting and seated dwell. Legacy saves continue their original takeaway path and timing.
+- Playback 8×/32× changes wall-clock presentation only; default 8×. It never changes engine timing or outcomes.
 - Customers form orderly queues at the cashier and pickup area and advance in queue order without overtaking.
 - Queued customers physically occupy floor space and can obstruct other customers; queues are not abstract off-canvas lists.
 - Customers must not walk through furniture or each other, including while joining, advancing through, or leaving queues.
@@ -106,6 +133,8 @@ Acceptance criteria:
 - [ ] Every run ends within its finite simulated-time limit; all unfinished scheduled customers are counted as failed to complete.
 
 ### Simulation Results and Heatmap
+
+Lead with completed/scheduled, then fulfilled dine-in/requested and conversions to takeaway. Show physical seat capacity, order-to-ready time (all produced orders, including later customer failures), and separate total barista walking distance. Retain completed-only customer wait/walk averages and customer-only obstruction heatmap. Fewer fulfilled dine-in requests suppress favorable time/obstruction badges even when everyone completes. Different capacities are shown as context, not equivalent service fulfillment.
 
 - After completion, the canvas shows the final customer positions/state and the accumulated flow visualization.
 - A heatmap highlights where customers experience movement obstruction caused by the layout and interactions with other customers. Normal queueing or crowd density alone must not create a congestion hotspot.
@@ -152,6 +181,8 @@ Acceptance criteria:
 - [ ] Starting a new comparison requires confirmation and preserves the current layout.
 
 ### Local Persistence
+
+Known `grid-v1`/`takeaway-rush-v1` and `grid-cafe-v2`/`mixed-cafe-rush-v2` snapshots remain readable together. Each preview retains its own captured model, seating and theme. Cross-model results cannot be compared; explain this and offer the existing confirmed Start New Comparison. Do not clear known historical results merely because the active layout uses the new model.
 
 - The app automatically saves the current layout locally.
 - The app automatically saves the last completed results, including baseline/latest comparison data where applicable.
@@ -201,7 +232,7 @@ Acceptance criteria:
 
 The proof of concept is complete when a user can:
 
-- Open a premade takeaway café layout.
+- Open a premade self-service café layout with functional grouped seating, staff work and customer flow; legacy takeaway layouts remain supported.
 - Move its objects with valid-placement rules and feedback.
 - Run a fixed-condition rush-hour simulation with visible customer movement and queues.
 - See orderly queues and movement that avoids furniture and other customers, with bounded stuck-customer handling.
@@ -219,7 +250,7 @@ The proof of concept is complete when a user can:
 - Accounts, cloud storage, sharing links, and collaboration — they add product infrastructure without proving the core interaction.
 - Full furniture/object creation and a furniture library — the ready-made layout is enough for the demo.
 - Custom arrival patterns or service-time editing — fixed conditions keep comparison fair and the simulation understandable.
-- Dine-in behavior and seating demand — the POC is intentionally takeaway-oriented.
+- Group bookings, configurable demand, recipes/menu, cleaning, inventory and additional staff roles remain deferred. Individual seating and one moving barista are approved in the 2026-10-25 café revision.
 
 ## Possible Later Enhancements
 
@@ -232,7 +263,7 @@ The proof of concept is complete when a user can:
 
 ## Non-Goals
 
-- **3D visualization** — 2D is sufficient to prove layout-responsive flow and keeps the simulation focused.
+- **True 3D rendering/physics or a movable camera** — fixed isometric presentation uses the existing 2D simulation and ground coordinates.
 - **A real-world forecasting engine** — results are a simplified experiment, not a promise of exact café performance.
 - **A single overall optimization score** — it could hide trade-offs between waiting, congestion, and completed customers.
 - **Live editing during simulation** — locking the layout preserves fair, interpretable runs.

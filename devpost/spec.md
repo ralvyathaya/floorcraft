@@ -5,6 +5,33 @@ status: approved
 
 # FloorCraft — Technical Spec
 
+## Flow Diagnosis and Controlled Case — 2026-10-25
+
+- **Read-only derivation:** `src/simulation/diagnostics.js` derives final-snapshot evidence from existing orders, outcomes/metrics and heat cells. For produced orders with recorded, ordered submission/start/ready ticks, average `(started-submitted)×0.5` and `(ready-started)×0.5` over the same cohort. Their sum equals average order-to-ready; no-ready/incomplete historical timestamps are unavailable. A cancelled order whose drink was ready remains in the produced cohort. Do not alter the engine, runner, counters, scenario or versions to compute diagnostics.
+- **Hotspots:** connect positive heat cells through four neighbors. Sum ticks×0.5 per connected component; rank descending seconds, then the first cell in y/x coordinate order. Return three areas plus total area count/seconds. Validate heat coordinates/values before deriving; absent/malformed historical heat is unavailable. Zero heat is a supported zero-obstruction result, not a verdict about production/service. Components retain their actual cells rather than implying their bounding rectangle was blocked.
+- **UI/data flow:** final snapshot → pure diagnostics → completion-first sidebar and optional non-listening projected floor outline. Working mode labels diagnostics as latest captured data. Show on tested layout selects that diagnostic's Baseline/Latest Preview, enables the fixed heatmap, and binds the outline to snapshot signature/view. View changes, edits, Undo, presets/case actions, starting a run and turning heat off clear it. Pan/Zoom/Fit transform the outline with the floor. Never publish live/partial diagnostics or save selection state.
+- **Other evidence:** derive admission count/customer-seconds and seating conversions from existing metrics; do not attribute admission delay to a specific mechanism or use seated time as waiting. Production figures and customer averages have different cohorts/definitions, explained in a disclosure. Historical takeaway snapshots expose available movement/admission evidence while café production/seating stays unavailable.
+- **Case data/actions:** `src/app/caseStudy.js` copies Compact's known 25-object inventory/six groups and industrial theme into A/B; only pickup x differs, 8 versus 5 at y=2. Use existing validation, signatures, scenario and runner. START_CASE_STUDY atomically loads A, pushes former layout to bounded Undo and clears results after UI confirmation if either result exists. APPLY_CASE_B requires a compatible baseline-A signature, retains both snapshots, pushes one Undo entry, and is idempotent on B. Both reject running/preview state. Case recognition/step is derived from geometry and snapshots after reload; no new persistence fields.
+- **Comparison:** same/different capacity is derived when both café capacities are known. Existing incompatible-model rejection stays. Capacity changes make favorable support metrics cautious as do fewer completions/fulfilled dine-in; raw completion/fulfillment remain primary. Same-capacity summaries express actual signed order-ready and obstruction changes, not a fixed outcome or overall score.
+- **Provenance/boundaries:** `devpost/case-study.md` attributes the published 10 × 15m Ruang Rasa plans and documents our 10 × 8m adaptation, assumed 12 seats/demand/staff/timing, raw-derived A/B results and operational limitations. Original source plans are linked, not bundled into runtime. No dependency, save/schema, engine/scenario version or physics change. Import, generalized geometry and scenario controls remain deferred.
+- **Verification:** hand-calculated stage/cohort cases; hotspot connectivity/ranking/zero/unavailable; A/B one-variable inventory/access and determinism; nonmutating derivation; Undo, result preservation, case confirmation, preview/running locks, custom/reload and legacy data; capacity cautions; real browser A/B completion, hotspot preview through pan/zoom, narrow touch/reduced motion, console and production build on Node 24.22.0.
+
+## Functional Café Revision — 2026-10-25
+
+This approved contract governs new default presets. Numeric takeaway scenario/serial-pickup rules below remain the contract for historical six/twelve-object layouts only. No backend, dependency upgrade, furniture catalog or configurable scenario is added.
+
+- **API/version:** preserve `createRun(layout, scenario)`, `step(run)`, `finish(run)`. `createScenario(layout)` selects `mixed-cafe-rush-v2` / `grid-cafe-v2` for `layout.modelId === 'cafe-v2'`; legacy/no-argument calls retain v1. The engine dispatcher delegates café state to `src/simulation/cafeEngine.js` while reusing navigation, swept-safe movement and queue primitives.
+- **Presets:** 10 × 8m room and existing portal. Corner four two-seat groups (8 seats), Compact six two-seat groups (12), Split four four-seat groups (16), preserving oak/industrial/terracotta. Group anchors: y=3.5/6; Corner/Split x=1.5/6.5, Compact x=1/4/7. Local 1.5 × 1m table starts `(0,0.5)` inside a 1.5 × 2m group; 0.5m-square chairs are `(0.5,0)/(0.5,1.5)` or `(0,0)/(1,0)/(0,1.5)/(1,1.5)`.
+- **Zones/stations:** fixed staffZone `(0,0,10,2.5)`, waitingZone `(0.5,2.5,9,1)`; tuples are x/y/width/height. Cashier/pickup at y=2, x pairs Corner 1.5/7.5, Compact 2/5.5, Split 1.5/8, public faces south. Coffee bar `(3,0,3,0.5)`, display `(9,2,1,0.5)`, planters `(0.5,0.5)` / `(9,6.5)`, bin `(0.5,7)`. Bench remains legacy-only. Inventories are exact known 19/25/27 ID/type sets, not arbitrary additions.
+- **Grouped editing:** `tableGroups` contain `{id,tableId,chairIds}`. Drag or rotation commits all members in one Undo entry. Clockwise local transform `(x,y,w,h) → (H-y-h,x,h,w)` retains group top-left anchor; bounding rectangles never become obstacles. Validate fixed dimensions, grid alignment, unique membership, accessible chair approaches and both staff/public service routes. Individual table/chair commits cannot break groups; zones are not editable architecture.
+- **Scenario:** 24 solo arrivals every 30 ticks; every fourth requests takeaway (18 dine-in). Ordering 12 ticks, preparation 60 plus walking, collection 4, seated dwell 1200, finite limit 5400; tick 0.5s. Constants are illustrative assumptions. Shared tables and one drink per person; no parties, recipes, cleaning or revenue model.
+- **Lifecycle:** reserve a reachable free seat at admission or record conversion to takeaway. Reserve a waiting-floor position before admission; full waiting space delays admission outside with separate counters. Waiting uses the rear row, keeping the counter-front row clear. Café queue lanes target six physical cells. Customers, staff, tickets, seats and holding reservations remain separate collections. A fixed cashier takes orders; one barista handles FIFO preparation at coffee bar, delivery to the staff side of pickup, then return. Only ready orders join customer collection service.
+- **Seating/safety:** approach an adjacent walkable chair cell, then anchor a seated sprite on the blocked chair footprint and remove it from walking occupancy. After exactly 1200 dwell ticks, reserve a free approach before standing/releasing the seat, before subsequent movement resolves. Empty/reserved/occupied states are visible. Expected queue/production/seating waits are not movement stalls. Terminal failures release reservations/queue membership and cancel unfinished orders; already-collected orders stay collected even if exit later fails.
+- **Metrics:** preserve completed-only customer wait/walk and customer-only obstruction/heatmap scale. Waiting excludes walking, ordering, collection and seated dwell. Add seatingCapacity, dineInRequested, dineInServed (completed seated journeys), switchedToTakeaway, averageOrderToReadySeconds (all produced orders, even later failures), baristaWalkingMeters. Completion comes first; fewer fulfilled dine-in requests make favorable time/obstruction deltas cautious. Different capacities remain explicit context.
+- **Save/identity:** schema/key 1 unchanged. Café signatures include canonical model/group/zone metadata; v1 signatures remain unchanged. Theme, visual rotation metadata, viewport and pace are excluded. Preserve supported historical snapshots/geometry without furniture insertion; render each captured model/theme. Cross-model comparisons are unavailable with a clear notice and the existing confirmed comparison reset. Unknown/corrupt results retain invalid-result handling; unreadable raw workspace bytes remain protected.
+- **Presentation/runner:** `advanceClock(...,pace)` defaults to 8; UI offers 8×/32× and clears fractional carry on speed changes without changing engine ticks. Run views expose staff/seats/orders. Depth-sort upright four-direction staff/seated sprites with furniture. Reduced motion disables decorative strides/pulses only. Local Inter Variable/OFL replaces serif headings. Desktop: 48px header, 12px gaps, flexible canvas, 330px internally scrolling sidebar; ≤820px stacks with 44px touch targets.
+- **Evidence:** retain takeaway regressions; test v2 FIFO/ready-before-collection, exact dwell, seat uniqueness/conversion/release, actor swept safety/zones, finite failure cleanup, grouped edits, historical previews/reload, and 8×/32× equality. Browser/production checks cover all themes, drag/rotation, seats/barista, heatmap, snapshots, reduced motion and narrow layout.
+
 ## How This Works, In Plain Language
 
 FloorCraft runs entirely in the visitor's browser. React builds the controls and sidebar; React Konva draws the café, handles dragging, and displays customers. A separate JavaScript engine decides where customers can move, whose turn it is to order, and what the results mean. The drawing follows those decisions rather than inventing an animation.
@@ -96,11 +123,11 @@ Submission still requires a short demo video and public GitHub repository; a dep
 
 Implements `prd.md > Look and Feel`.
 
-- CSS grid workspace: large flexible canvas, approximately 320–360px right sidebar, toolbar immediately below the canvas. Desktop-first; smaller windows may scroll rather than triggering a separate mobile product.
-- Proposed CSS tokens: off-white `#F7F5F0`, charcoal `#272A28`, muted green `#617768`, pale neutral borders. Use restrained red for invalid/failure states and amber/red for obstruction overlays, not an overall green success score.
-- System sans-serif interface text, tabular numbers for metrics; no external font request. Calm spacing, clear button hierarchy, visible text labels and focus states.
-- Draw furniture with reusable Konva shapes: tabletop/chair silhouettes, cashier and pickup labels, subtle floor lines, light shadows. Treat visual detail as decoration over the same footprints used by navigation.
-- Customer bodies stay within their simulation footprint. Interpolate only along accepted grid edges; do not cut corners or add unconstrained positional jitter. Small direction changes can soften appearance without changing physics.
+- CSS grid workspace: large flexible canvas, approximately 320–344px right sidebar, three preset cards above the canvas and toolbar below. Desktop-first; narrow windows stack the editor and sidebar.
+- Approved isometric palette: softened sage framing `#61705A`, ivory cards `#F8F4E8`, warm oak/walnut material and restrained brass trim. Contrast is softened in response to learner feedback; essential header/button text retains at least 4.5:1 contrast. Red marks invalid/failure states and amber/red marks obstruction, not an overall optimization score.
+- System sans-serif interface text, local Georgia headings, tabular numbers for metrics; no external font request. Calm spacing, clear button hierarchy, visible text labels and focus states.
+- Draw generated raster furniture/equipment/customer sprites and a projected oak texture, with simple ground polygons and cutaway architecture. Local asset metadata and generation prompts live in `devpost/design/artwork.md` and `src/components/cafeAssets.js`; all runtime assets are bundled locally.
+- Customer ground positions/radius remain the existing 0.2m model. Upright sprite height is purely visual. Interpolate only along accepted edges, with no corner cutting or jitter. Reduced motion selects the idle artwork and disables interface pulses without changing positions/timing/results.
 - Heatmap uses a shared absolute legend across compared runs; normalizing each run independently could make a tiny blockage look as severe as a major one.
 - Label the scenario and results as an illustrative, simplified simulation, not calibrated real-world predictions.
 
@@ -112,7 +139,8 @@ Implements `prd.md > Screens and Layout`, `prd.md > Baseline and Before/After Co
 
 `App.jsx` composes canvas, toolbar, and sidebar. A plain reducer owns `workingLayout`, bounded undo history, `baseline`, `latest`, view selection, and run status. Props and callbacks are sufficient; no global store dependency. The active engine lives in a runner ref, not in a reducer invoked during rendering.
 
-- Accepted moves append the previous layout to a maximum 30-entry in-memory undo list. Undo restores a committed layout and its derived tested status. No redo, resizing, rotation, or object creation in this POC.
+- Accepted moves append the previous layout to a maximum 30-entry in-memory undo list. Undo restores a committed layout and its derived tested status. No redo, resizing or object creation. The final approved revision adds validated 90-degree furniture rotation through the existing move-commit interface; x/y stays fixed, width/height swap, and counter serviceFace advances north/east/south/west. Each valid turn adds one Undo entry; invalid turns do not mutate state/history.
+- `APPLY_PRESET` takes a known preset ID, ignores unknown IDs/no-ops and is locked during runs/previews. It copies preset geometry into the working layout, adds one Undo entry and preserves baseline/latest. Preset identity is derived from canonical geometry, not saved; edited layouts display Custom. A fresh workspace starts with the expanded Corner Café, while a legacy save remains untouched.
 - Tested status compares a canonical geometry signature with the latest snapshot under the same scenario/engine version. Pan, zoom, selection, and heatmap visibility do not mark a layout untested. Returning exactly to tested geometry restores tested status.
 - Views are `working`, `baseline`, and `latest`. Previews use immutable snapshots, disable Move/Undo, and display a read-only label plus Return to Working Layout. Pan, Zoom, Fit, and the relevant heatmap remain usable.
 - Simulate operates only on the working layout; in preview mode the user first returns to working. Disable reset during a run. Start New Comparison confirms, returns to working, and clears baseline/latest without replacing the working layout.
@@ -122,9 +150,9 @@ Implements `prd.md > Screens and Layout`, `prd.md > Baseline and Before/After Co
 
 Implements `prd.md > Layout Editing and Validation` and `prd.md > Look and Feel`.
 
-`FloorplanCanvas.jsx` uses a Konva Stage with separate floor/furniture, heatmap, and customer layers. Use `listening={false}` on decorative overlays so they do not intercept drag events. Furniture uses stable IDs and controlled committed positions; drag candidates are temporary. On rejected release, explicitly reset the Konva node to committed coordinates.
+`FloorplanCanvas.jsx` uses a Konva Stage with a non-listening ground/heatmap/guide layer and a common depth-sorted furniture/customer layer. Decorative artwork never intercepts pointer events; draggable hit polygons match projected ground footprints. Stable IDs preserve nodes while sorting. Drag candidates are temporary; on rejected release explicitly reset the node to committed projected coordinates.
 
-`Toolbar.jsx` provides Select/Move, Pan, Zoom in/out, Fit to View, Undo, and Heatmap. Pan/zoom transforms belong to the viewport, never world geometry. Convert pointer positions back to world coordinates before validating a move. In Pan mode, drag the stage rather than furniture. Fit recomputes a bounded scale and centered offset from the floor rectangle and available space; resize preserves usability.
+`Toolbar.jsx` provides Select/Move, Pan, Zoom in/out, Fit to View, Undo, and Heatmap. Pan/zoom transforms belong to the viewport. The fixed 2:1 projection is `(x-y)*scale, (x+y)*scale/2`; its inverse is `(screenX/2+screenY)/scale, (screenY-screenX/2)/scale`. Drag uses the inverse in stage-local coordinates, then the existing 0.5m snap and placement validation. Fit accounts for all four room corners, sprite headroom and annotations. In Pan mode, drag the stage rather than furniture.
 
 Heatmaps shown in a preview come from that snapshot only. In working mode, hide old heatmaps when geometry is untested rather than projecting stale results over new furniture. Live run heatmap/counters may be shown as provisional; final result cards publish only at completion.
 
@@ -133,6 +161,14 @@ Heatmaps shown in a preview come from that snapshot only. In working mode, hide 
 Implements `prd.md > Look and Feel` and `prd.md > Layout Editing and Validation`.
 
 `Furniture.jsx` renders recognizable silhouettes from the canonical object footprint and forwards selection/drag events to the canvas. Shadows and labels do not enlarge physical collision bodies. It contains no queue, routing, or metric logic.
+
+The approved isometric revision supersedes top-down vector styling. Sprite dimensions and base anchors come from the local atlas manifest. Furniture/customer ordering first respects one-way footprint separation, with stable ground-depth/ID ordering for otherwise ambiguous overlaps. Customers use two stable appearances, four directions and two poses selected from existing tick/interpolation data; no independent animation loop or saved sprite state is added. Raster height, foliage, wall details and equipment do not enlarge ground collision geometry. On asset failure show an explicit notice and labeled ground footprints so editing/simulation remain usable.
+
+### Curated Preset Data
+
+`src/app/presets.js` provides functional `cafePresets` defined in Functional Cafe Revision above, and retained `legacyPresets` for takeaway regression/theme inference. `initialLayout` stays unchanged. Exact inventories, dimensions and roles are validated; presets do not create an arbitrary object catalog.
+
+Regression evidence under the fixed scenario: Corner Café 24 completions, 21.1323% obstruction; Compact Service 21 completions/3 stuck, 52.5887%; Split Counter 24 completions, 34.6278%. These are executable fixture expectations, never prefilled UI results or forecasts. No preset is asserted to be globally optimal.
 
 ### Geometry and Navigation
 
@@ -149,6 +185,8 @@ Implements `prd.md > Layout Editing and Validation` and `prd.md > Rush-Hour Simu
 - Static accessibility ignores customer occupancy; a tight accessible layout is allowed. Dynamic queues or opposing traffic can still obstruct it during simulation.
 
 ### Fixed Rush-Hour Scenario
+
+This table describes the legacy takeaway model. New café presets use the separately versioned Functional Café Revision above.
 
 Implements `prd.md > Rush-Hour Simulation` and resolves timing questions from `prd.md > Open Questions`.
 
@@ -175,6 +213,8 @@ Generate arrivals/service durations once in the scenario, not from wall-clock ti
 If entrance space is occupied, scheduled customers wait outside in stable arrival order, without overlapping the customer already entering. Release them when that cell is free. Outside holding is reported separately from in-shop waiting and remains subject to the overall run limit; customers never admitted still count in scheduled totals and timeout failures.
 
 ### Physical Queues and Service
+
+This serial pickup-preparation contract applies to legacy layouts. Café production and ready-order collection are separate; its physical lanes target six cells.
 
 Implements `prd.md > Rush-Hour Simulation`.
 
@@ -241,6 +281,8 @@ Implements `prd.md > Baseline and Before/After Comparison` and `prd.md > Simulat
 
 `SimulationSidebar.jsx` shows primary action, running progress/Stop, completion/failure messaging, and selected-view identity. `ComparisonPanel.jsx` displays baseline/latest columns, metric deltas, supporting walking time, failure counts, and Working/Baseline/Latest view controls. Before the first run show instructions, not fabricated metrics. After only one run explain that it is the baseline and another tested layout is needed for comparison.
 
+The isometric revision adds a completion-first Experiment Takeaway, then signed wait/walk/obstruction deltas from the existing comparison function. Incompatible comparisons and fewer completed customers retain explicit cautions. Averages alone are never labelled a total improvement.
+
 Label stale results after a working edit; do not relabel old metrics as belonging to the working geometry. Previews keep their own snapshot heatmaps. Reset confirmation is a simple accessible confirmation, not another screen or saved-history system.
 
 ### Local Storage Adapter
@@ -249,9 +291,11 @@ Implements `prd.md > Local Persistence`.
 
 `storage.js` reads/writes a single versioned JSON document at `floorcraft.workspace.v1` using browser `localStorage`. Persist committed working layout, baseline and latest completed snapshots; never active-run counters or drag candidates. Save accepted moves/reset/completions promptly, not only on page close. The reducer publishes baseline/latest together so a partial first-run commit cannot create an inconsistent comparison.
 
-Validate schema, finite coordinates and metrics, object IDs/types, bounds, scenario/engine version, completion reconciliation, and snapshot geometry before using stored content. Treat browser storage as untrusted data; render messages as text. Invalid data shows a warning and opens a safe bundled layout without silently claiming recovery. Do not overwrite an unreadable save until the user explicitly chooses to replace/reset it. If only engine/scenario versions changed, retain valid working geometry and clear incompatible results with notice.
+Validate schema, finite coordinates and metrics, object IDs/types, bounds, scenario/engine version, completion reconciliation, and snapshot geometry before using stored content. Treat browser storage as untrusted data; render messages as text. Invalid data shows a warning and opens a safe bundled layout without silently claiming recovery. Do not overwrite an unreadable save until the user explicitly chooses to replace/reset it. Retain valid geometry and supported historical snapshots; reject cross-model comparison. Clear only unknown-version or malformed results with notice.
 
 Storage disabled/full -> keep the app usable in memory and show **Changes cannot be saved in this browser**. No silent autosave claim. Undo history, viewport, selected view, and running state are session-only and reset on reload. On reopening always start in Working Layout, deriving tested/untested status from the saved geometry and latest snapshot.
+
+Schema version 1 and `floorcraft.workspace.v1` are unchanged. Validate the exact six/twelve-object historical inventories or the known 19/25/27-object cafe inventories, including unique IDs and matching types; reject partial/mixed inventories. Working layouts and snapshots support their matching known model/inventory. Legacy restores never inject props or relocate geometry; the UI explains how to load a preset, and Undo can return to the preserved layout.
 
 ## Data Model
 
@@ -259,12 +303,13 @@ Use plain serializable objects with JSDoc where helpful; JavaScript, not a TypeS
 
 | Data | Contents | Owner and lifetime |
 | --- | --- | --- |
-| Layout | room dimensions, cell size, fixed portal, objects `{id,type,x,y,width,height,serviceFace?}` | Editable reducer value; saved on committed changes |
+| Layout | room, portal, optional theme; objects `{id,type,x,y,width,height,serviceFace?,rotation?}`; café layouts add `modelId`, `tableGroups`, `staffZone`, `waitingZone` | Editable reducer value; saved on committed changes |
 | Scenario | version, explicit arrivals/durations, movement/tick/stall/limit settings | Bundled constant; copied/referenced immutably per run |
 | Navigation map | blocked cells/edges, service approaches, queue lanes | Derived per candidate/run; not saved |
 | Active run | tick, captured layout, occupancy, queue IDs/slots, customer phases/counters, obstruction grid | Engine instance owned by runner; discarded on stop/reload |
+| Café runtime | separate staff, FIFO order tickets, empty/reserved/occupied seats, reserved floor-holding positions | Derived/advanced by café engine; active state never restored |
 | Customer outcome | ID, terminal outcome/reason, entry/exit ticks, last cell, waiting/walking/attempted/blocked counters | Finalized into result; includes every scheduled customer; last cell supports final failure markers |
-| Completed snapshot | engine/scenario version, layout copy/signature, comparison-local run number, elapsed ticks, metrics, outcome list, heatmap grid | Immutable baseline/latest; saved locally |
+| Completed snapshot | engine/scenario version, layout/signature, run number, elapsed ticks, metrics, outcomes, heatmap; café captures final staff/seats/orders | Immutable baseline/latest, including supported historical models; saved locally |
 | Workspace save | schema version, working layout, baseline, latest | JSON in localStorage; small fixed-size dataset, no frame history |
 | UI state | view, selected ID, tool, viewport, heatmap visibility, messages, undo list | In-memory React state only |
 
@@ -287,7 +332,7 @@ project/
 │   ├── styles.css                  # Layout, tokens, controls
 │   ├── components/
 │   │   ├── FloorplanCanvas.jsx      # Stage/layers, viewport and drag feedback
-│   │   ├── Furniture.jsx            # Reusable top-down silhouettes
+│   │   ├── Furniture.jsx            # Isometric raster sprites and ground hit polygons
 │   │   ├── Toolbar.jsx              # Editor/viewport controls
 │   │   ├── SimulationSidebar.jsx    # Run actions/status/results
 │   │   └── ComparisonPanel.jsx      # Snapshot selection and deltas
@@ -363,13 +408,13 @@ The user authenticates with GitHub/Cloudflare through their own browser when con
 - **Engine exception** -> stop the active run, show an error, preserve working layout and previous completed snapshots. An exception is not Simulation Complete.
 - **Storage unavailable/invalid** -> warn and keep in-memory operation or a safe initial layout; never silently overwrite an unreadable save.
 - **Background/slow tab** -> suspend/catch up bounded engine work without changing tick math or freezing the browser in an unbounded loop.
-- **Version changed** -> retain valid editable geometry, discard incompatible comparison data with explanation.
+- **Version changed** -> retain valid geometry and supported historical snapshots; explain cross-model comparison incompatibility. Only unknown/malformed results use invalid-result clearing.
 - **Pages setup/build fails** -> retain the working local build, diagnose the actual build log, and record locally if necessary; no invented deployment success.
 
 ## What Was Simplified and Why
 
 - Small four-neighbor grid rather than continuous crowd physics: shared placement/routing rules and testable collision safety. Natural-looking interpolation is presentation, not a different movement model.
-- One cashier and one serial pickup station rather than staff/drink-production scheduling: captures queues without an operational digital twin.
+- One fixed cashier, one serial moving barista and shared-table individual seating rather than a full operational digital twin. Legacy layouts retain serial takeaway pickup.
 - Generated physical queue lanes and bounded reroute/yield rather than sophisticated human behavior: predictable policy, explicit congestion/failures, and no forced-success escape hatch.
 - Fixed furniture shapes, dimensions and orientation rather than full CAD: supports the selected layout experiment without an object library.
 - React hooks, ordinary CSS, browser storage, and a small synchronous engine rather than state libraries, services, or worker infrastructure. Reconsider only if measured responsiveness fails at the agreed scenario size.
@@ -397,3 +442,15 @@ The central risk is movement/queue interaction, not rendering. Validate that bou
 Dependency versions were looked up but not installed, peer-tested, or built. Initial setup must verify them, confirm local Node tooling, and record exact versions. No app code, repository publication, or deployment has been performed by this spec.
 
 PRD open questions now have proposed homes: obstruction calculation in Metrics and Heatmap; finite limits in Fixed Rush-Hour Scenario; customer timing in the same table; accessibility/pathfinding in Geometry and Navigation. Validate the initial values with fixtures; changing scenario/engine behavior requires a version change and invalidating incompatible results.
+
+### Final Theme and Rotation Contract — 2026-10-24
+
+Historical visual-revision contract: the newer Functional Cafe Revision changes model versions, grouping and capacities; theme, sprite loading and popup principles remain applicable.
+
+Theme IDs are `oak`, `industrial`, `terracotta`, tied to Corner/Compact/Split respectively. Persist themeId on layouts and 0/90/180/270 rotation on edited objects; missing fields remain valid. Old layouts infer the theme from matching canonical geometry, otherwise oak; a first edit captures that inferred theme. Run signatures still exclude presentation metadata, while preset recognition also checks theme/orientation. Snapshot captures already clone the entire layout, retaining each tested appearance. Save schema 1, storage key, engine/scenario versions and engine interfaces remain unchanged. Unknown/null theme IDs and non-quarter-turn rotations are rejected by storage validation.
+
+The canvas loads only the active theme's sprite atlases/floor plus shared customer art. Metadata records source crops and ground anchors; upright sprites use directional artwork, not a flat-image rotation. Stale image-load callbacks cannot replace the current theme. On load failure, labeled footprint editing and simulation remain usable.
+
+Selection is ephemeral, not saved. Click/tap the ground polygon in Select/Move to open a native-button, nonmodal popup anchored beside the selected footprint, clamped inside the canvas and recomputed with the viewport. It closes on outside pointerdown, Escape, drag, preset/view/tool changes or editing locks. Focused canvas arrows select objects; Enter opens controls; Close/Escape returns focus to the canvas. Rotate validates through existing navigation before forwarding a move commit; the reducer also uses that validation so inaccessible counter/portal candidates cannot commit.
+
+UI keeps product identity, scene name/size, state badge, one contextual editing hint and functional legends. Remove local-workspace/projection badges, decorative eyebrows, repeated slogans and duplicate summary deltas. About this simulation is an accessible disclosure; failure/untested/save cautions stay visible.

@@ -7,6 +7,10 @@ status: approved
 
 An interactive web app where coffee shop owners design layouts and see how they perform through customer flow simulation.
 
+## Evidence Refinement — 2026-10-25
+
+The approved follow-up adds final-snapshot Flow diagnostics and a controlled 12-seat A/B example inspired by the publicly documented Café Ruang Rasa circulation problem. Derive production queue/preparation-delivery timing, connected obstruction areas, seating conversions and outside-admission pressure from existing captured data; do not change engine behavior or create an overall score. Both example variants reuse Compact geometry and inventory, differing only in pickup `(8,2)` versus `(5,2)`. Three existing 8/12/16-seat presets stay available. Same/different-capacity context prevents confusing a capacity change with an isolated arrangement effect. The source building is 10 × 15m; our 10 × 8m model is explicitly an adaptation, not a reconstruction or operational assessment. See [case-study.md](case-study.md) for attribution, assumptions, measured results and trade-offs. Import, configurable scenarios, AI recommendations and further editor features remain deferred.
+
 ## The Unique Kernel
 
 The instant feedback loop between spatial design and simulated customer behavior. You don't just draw a floor plan—you watch simulated customers move through your layout, queue, order, and leave, then immediately adjust objects and compare the results. It's the combination of design tool and live simulation with visual feedback (heatmaps, bottleneck highlights) that makes this distinctive, not one or the other alone.
@@ -39,8 +43,9 @@ The "oh, that's cool" moment: watching the simulation respond to your layout cha
 
 ## The POC Boundary
 
-- Premade small coffee shop layout (tables, counter, pickup area, entrance) loaded on open
-- 2D canvas with drag-and-drop to reposition objects
+- Three self-service café layouts in the same 10 × 8m room: Corner Café has four two-person tables (8 seats), Compact Service six two-person tables (12), and Split Counter four four-person tables (16). Each retains cashier, pickup, coffee bar, display, two planters and a bin; the material themes remain oak, industrial and terracotta.
+- Functional seating reservations and a moving barista connect the layout to service and capacity. The fixed scenario has 24 solo customers, 18 requesting dine-in; full seating converts a request to takeaway. One barista prepares and delivers orders FIFO, separately from customer pickup queues.
+- Isometric 2.5D presentation over a deterministic 2D simulation, with atomic table/chair-group dragging and validated quarter turns. Staff and public zones remain fixed. Presets preserve comparison results and add one Undo step; legacy six/twelve-object saves retain the original takeaway model without inserting objects.
 - "Simulate Rush Hour" button
 - Customer simulation that genuinely responds to object placement (pathfinding, collision detection)
 - Visual feedback: heatmaps or highlights for crowded areas and bottlenecks
@@ -61,7 +66,15 @@ The "oh, that's cool" moment: watching the simulation respond to your layout cha
 
 ## Explicitly Cut
 
-- **Advanced analytics or metrics dashboards.** The proof of concept stays visual and immediate—two simple metrics and visual feedback only. Complex charts and multi-variable analysis don't serve the core loop yet.
+- **Advanced analytics or metrics dashboards.** Completion, seating fulfillment/conversions, wait/walk, obstruction, order-to-ready and barista distance support the experiment loop; no revenue, forecasting, optimization score or complex charts.
 - **Multi-user collaboration.** Sharing layouts or co-editing in real time is valuable, but unnecessary to prove the kernel. One user, one session.
 - **Integration with actual café POS or inventory systems.** Real-world data integration would make this more powerful, but it's outside proof-of-concept scope and adds external dependencies.
-- **3D visualization.** Tempting for visual impact, but the simulation and interaction complexity are already substantial. 2D keeps the build realistic for this hackathon timeline.
+- **True 3D visualization/physics.** The approved isometric studio uses a fixed 2:1 projection and raster sprites over the existing 2D world. There is no 3D engine, camera orbit, height-based routing, or editable architecture.
+
+## Approved Visual Revision — 2026-10-24
+
+The learner selected a realistic semi-pixel isometric café, three curated layout presets and additional movable floor objects, then requested softer contrast after reviewing the generated concept. This replaces the earlier top-down vector styling. The simulation kernel is unchanged. Equipment on the coffee bar is decorative; floor props are rectangular obstacles. There is no object add/remove library, barista simulation, seating behavior or new scenario. Comparison takeaways derive only from measured run outcomes. A café-user test guide is prepared, but real café validation has not been performed; do not claim calibrated forecasts, cost savings or increased sales.
+
+## Approved Final Refinement — 2026-10-24
+
+One material theme per preset: Corner oak/Japandi, Compact concrete/industrial, Split terracotta/Mediterranean. Differences are flooring and furniture variants; shared UI/customer styling and soft light remain consistent. A small click/tap popup turns furniture by 90° with its ground dimensions and counter service face, validated and undoable. No separate theme picker, resizing, object library or simulation rewrite. Optional appearance metadata keeps existing saves compatible. Remove repetitive decorative/technical copy while preserving failure cautions, metric qualifications and preview identity.
