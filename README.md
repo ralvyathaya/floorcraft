@@ -70,6 +70,12 @@ The café scenario is deliberately synthetic: 24 solo arrivals every 15s, 18 din
 
 There is no backend, account, telemetry, AI API, or real customer data. **Committed layouts and completed comparison snapshots persist in the current browser origin**; active runs, undo history, viewport state, and preview selection do not. If browser storage is unavailable, the app remains usable with an unsaved warning. This is a local proof of concept, not a published or deployed service.
 
+## Code and asset provenance
+
+FloorCraft's original work is released under the [MIT License](LICENSE). Bundled runtime packages retain their own copyright and license notices in [third-party runtime notices](public/licenses/THIRD-PARTY-NOTICES.txt); the production build includes that file under `licenses/`. Inter Variable retains its [SIL Open Font License](public/licenses/Inter-OFL.txt). Build/test dependencies and exact versions are recorded in `package.json` and `package-lock.json`.
+
+The three-theme raster artwork was generated using the built-in image tool; selected originals, prompts, crops and anchors are recorded in [Artwork](devpost/design/artwork.md). The [public-plan case study](devpost/case-study.md) credits its authors, links the CC BY 4.0 source and separates published facts from FloorCraft's adaptation. No original source-plan drawing is redistributed.
+
 ## Submission evidence still to finish
 
 The [official judging criteria](https://learn-ai-basics.devpost.com/rules) give equal weight to Design, Potential Impact, Innovation/Idea and Presentation. The edit/run/compare/reload journey and capacity/service experiments provide model evidence; café-user usefulness and real-world accuracy are not yet validated. The differentiator is an approachable café experiment with completion- and fulfillment-aware comparisons, not a claim to have invented floor planning or pedestrian simulation.
