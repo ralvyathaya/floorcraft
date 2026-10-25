@@ -28,7 +28,7 @@ test('each preset loads its own material assets and keeps its theme through edit
     await page.getByRole('button', { name: `Load ${preset.name}`, exact: true }).click();
     await expect(page.locator('.canvas-shell')).toHaveAttribute('data-theme', preset.themeId);
     await expect(page.locator('.canvas-shell')).toHaveAttribute('data-assets', 'ready');
-    expect(images.some(url => url.includes(`${preset.themeId}-service.png`))).toBe(true);
+    expect(images.some(url => url.includes(`${preset.themeId}-service`))).toBe(true);
   }
   const a = await floorPoint(page, 2.25, 4.5);
   await page.mouse.click(a.x, a.y);

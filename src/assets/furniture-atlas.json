@@ -56,20 +56,20 @@
       {
         "sheet": "seating",
         "crop": {
-          "x": 605,
-          "y": 296,
-          "width": 176,
-          "height": 283
+          "x": 1001,
+          "y": 371,
+          "width": 175,
+          "height": 208
         },
         "anchorY": 0.98
       },
       {
         "sheet": "seating",
         "crop": {
-          "x": 1001,
-          "y": 371,
-          "width": 175,
-          "height": 208
+          "x": 605,
+          "y": 296,
+          "width": 176,
+          "height": 283
         },
         "anchorY": 0.98
       },
@@ -832,7 +832,7 @@
       {
         "sheet": "seating",
         "crop": {
-          "x": 587,
+          "x": 1006,
           "y": 321,
           "width": 182,
           "height": 244
@@ -842,7 +842,7 @@
       {
         "sheet": "seating",
         "crop": {
-          "x": 1006,
+          "x": 587,
           "y": 321,
           "width": 182,
           "height": 244

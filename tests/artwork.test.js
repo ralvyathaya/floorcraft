@@ -31,3 +31,11 @@ test('every theme has four upright frames per furniture family with recorded gro
     }
   }
 });
+
+test('chair artwork follows south, west, north, east clockwise facings in every theme', () => {
+  // These source columns were visually checked against each chair's seat and backrest.
+  const sourceX = { oak: [128, 1001, 605, 1476], industrial: [124, 568, 1007, 1463], terracotta: [128, 1006, 587, 1459] };
+  for (const [theme, columns] of Object.entries(sourceX)) {
+    expect([0, 90, 180, 270].map(rotation => artForFurniture(theme, { type: 'chair', rotation }).crop.x)).toEqual(columns);
+  }
+});

@@ -23,6 +23,8 @@ Shared customer sprites and the oak floor from the first approved iteration rema
 
 Frames are actual directional artwork; no flat-plane image rotation is used. Following visual inspection, oak service/display columns, industrial table/bench/display columns and terracotta table/bench/service/display columns were reordered 0,2,1,3 to align long axes with clockwise world orientation. The retained sprites do not contain attached seating outside table footprints. Foliage, countertop equipment and sprite height remain decorative and do not add collision geometry.
 
+Final hands-on correction (2026-10-25): oak and terracotta chair columns were also reordered 0,2,1,3 after the rear-facing seats appeared sideways. Chair rotations 0/90/180/270 now select world south/west/north/east frames consistently with industrial seating. Only crop selection changed; original PNGs, furniture geometry, saved rotations, seating poses and simulation signatures remain intact. `tests/artwork.test.js` records the visually audited source columns for all four directions in every theme.
+
 ## Earlier approved artwork and prompts (history)
 
 The original furniture atlas below is superseded by the three-theme atlas set. The concept is a visual reference, not a feature list. Its accepted lower-contrast direction remains.
