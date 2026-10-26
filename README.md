@@ -2,6 +2,8 @@
 
 FloorCraft is a browser-only isometric café layout experiment for café owners/operators and conceptual design discussions. Move grouped seating and service stations, run a fixed mixed dine-in/takeaway scenario, and inspect customer circulation, capacity trade-offs and a moving barista's work. Semi-pixel artwork follows a deterministic 2D engine; results are illustrative model experiments.
 
+[Live app](https://floorcraft-ruby.vercel.app/) · [Demo video](https://www.youtube.com/watch?v=r_Qcr-RwSdk) · [Devpost submission](https://devpost.com/software/floorcraft-kjqybz)
+
 ## Run locally
 
 Requires Node 24 and npm. The project records the working Node patch in `.node-version`.
@@ -68,7 +70,7 @@ Real café-user validation has **not** been performed. [User test guide](devpost
 
 The café scenario is deliberately synthetic: 24 solo arrivals every 15s, 18 dine-in requests, ordering 6s, one barista prepares each drink for 30s plus walking/delivery, collection 2s, seated dwell 10min, run limit 45min, 0.5m grid and 0.2m walking bodies. Seats are reserved at admission and may be shared by unrelated individuals. Full seating switches to takeaway; full waiting space delays admission outside. There is no menu, party booking, cleaning, configurable scenario, operational calibration or building-code evaluation. Waiting excludes walking, ordering, collection and seated dwell; only blocked travel contributes heat. Failures remain explicit.
 
-There is no backend, account, telemetry, AI API, or real customer data. **Committed layouts and completed comparison snapshots persist in the current browser origin**; active runs, undo history, viewport state, and preview selection do not. If browser storage is unavailable, the app remains usable with an unsaved warning. This is a local proof of concept, not a published or deployed service.
+There is no backend, account, telemetry, AI API, or real customer data. **Committed layouts and completed comparison snapshots persist in the current browser origin**; active runs, undo history, viewport state, and preview selection do not. If browser storage is unavailable, the app remains usable with an unsaved warning. The public app is a hosted proof of concept; localhost and the public URL have separate browser saves.
 
 ## Code and asset provenance
 
@@ -76,8 +78,8 @@ FloorCraft's original work is released under the [MIT License](LICENSE). Bundled
 
 The three-theme raster artwork was generated using the built-in image tool; selected originals, prompts, crops and anchors are recorded in [Artwork](devpost/design/artwork.md). The [public-plan case study](devpost/case-study.md) credits its authors, links the CC BY 4.0 source and separates published facts from FloorCraft's adaptation. No original source-plan drawing is redistributed.
 
-## Submission evidence still to finish
+## Submission and evidence
 
 The [official judging criteria](https://learn-ai-basics.devpost.com/rules) give equal weight to Design, Potential Impact, Innovation/Idea and Presentation. The edit/run/compare/reload journey and capacity/service experiments provide model evidence; café-user usefulness and real-world accuracy are not yet validated. The differentiator is an approachable café experiment with completion- and fulfillment-aware comparisons, not a claim to have invented floor planning or pedestrian simulation.
 
-The final demo video and learner-written pitch are pending. Show the intended user/problem, a real layout change or counter turn, the live run, completion-first comparison and heatmap, and the model's limits. Nothing here establishes a competition ranking or substitutes for the official submission.
+Submitted to Build With AI: Basics on 2026-10-26. The public entry links to the working app, an approximately two-minute demo and this repository. Signed-out playback and sampled A/B run, comparison and diagnostic footage were checked. See [the shipping checklist](devpost/checklist.md#shipping--6-ship) for the verification record and its limits. These artifacts do not establish a competition ranking or operational prediction accuracy.

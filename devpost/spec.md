@@ -68,7 +68,7 @@ Fixed scenario + layout copy -> grid/queues -> engine ticks -> positions -> canv
 
 ## Stack
 
-Learner-selected: JavaScript/JSX, React + Vite, React Konva, frontend-only operation, and Cloudflare Pages with GitHub integration. Use ordinary CSS and React hooks rather than a UI framework or external state store. Proposed verification tools: Vitest for engine/application logic and Playwright for a small browser suite.
+Learner-selected: JavaScript/JSX, React + Vite, React Konva and frontend-only operation. Cloudflare Pages with GitHub integration was the original hosting plan; the learner's final public deployment uses Vercel, verified during 6-ship. Use ordinary CSS and React hooks rather than a UI framework or external state store. Proposed verification tools: Vitest for engine/application logic and Playwright for a small browser suite.
 
 Package versions below were retrieved from npm during planning on 2026-10-19. They are candidate pins, not an installed or tested dependency set. Recheck peer requirements in the first build step, install compatible releases, and commit `package-lock.json`; do not silently upgrade during later steps.
 
@@ -97,7 +97,9 @@ npm run dev -- --host 127.0.0.1 --port 5173 --strictPort
 
 Open `http://127.0.0.1:5173`. For production verification, run `npm run build`, then `npm run preview -- --host 127.0.0.1 --port 4173 --strictPort` and open `http://127.0.0.1:4173`.
 
-### Cloudflare Pages Deployment
+### Original Cloudflare Pages Deployment Plan
+
+This route was not provisioned. The learner independently published the final static app at https://floorcraft-ruby.vercel.app/ on Vercel; public access and rendered artwork/controls were verified on 2026-10-26. The following retains the original optional Pages setup for reference.
 
 Use a public GitHub repository and Pages' built-in Git integration, not a separate deployment API or GitHub Actions workflow. Repository creation, authorization, and pushes occur only when authorized during build/ship; this document does not provision anything.
 
@@ -117,9 +119,16 @@ Local saves belong to one browser origin: localhost, preview deployments, and th
 
 ### Recording and Public Verification
 
-Submission still requires a short demo video and public GitHub repository; a deployed URL is additional. Show baseline -> furniture move -> rerun -> compare metrics and read-only previews. Record locally if hosting is unavailable. Before sharing, verify the public URL without a logged-in session and inspect the public repository for personal context or credentials.
+Submission requires a short demo video and public GitHub repository; a deployed URL is additional. Show baseline -> furniture move -> rerun -> compare metrics and read-only previews. Record locally if hosting is unavailable. Before sharing, verify the public URL without a logged-in session and inspect the public repository for personal context or credentials.
 
-Shipping evidence, 2026-10-25: the existing repository is https://github.com/ralvyathaya/floorcraft , verified public by the GitHub connector and anonymous HTTP/API reads. Its default branch is `master`. The reviewed implementation was published through English PR https://github.com/ralvyathaya/floorcraft/pull/1 and, after explicit authorization, merged at `5eb19d9`. No repository recreation, visibility change or deployment was performed. The current tree and reachable history were checked for selected credential/private-context patterns; the ignored learner profile and its reflection are excluded. The learner explicitly selected MIT; root `LICENSE` records that choice, while `public/licenses/THIRD-PARTY-NOTICES.txt` and `Inter-OFL.txt` preserve third-party terms. See `checklist.md > Shipping — 6-ship` for verification and remaining publication tasks. No video has been recorded yet; private English recording notes are outside the repository. Demo-video/deployment URLs and the authenticated Devpost form remain unverified. Do not invent URLs, submission status or learner-authored answers.
+Final shipping evidence, 2026-10-26:
+
+- Public entry: https://devpost.com/software/floorcraft-kjqybz — visible while signed out, listed as submitted to Build With AI: Basics, and linking the correct repository, demo and live app.
+- Source: https://github.com/ralvyathaya/floorcraft — public, default `master`; implementation PR #1 merged at `5eb19d9`, licensing PR #2 at `7fada13`. GitHub detects MIT. A fresh anonymous clone of `7fada13` passed `npm ci`, 96/96 unit tests and production build on Node 24.22.0. The current tree/reachable history were checked for selected credential/private-context patterns; ignored learner context and private recording notes remain excluded.
+- Demo: https://www.youtube.com/watch?v=r_Qcr-RwSdk — approximately two minutes, playable without signing in. Sampled English-captioned footage shows a running case, completed A/B trade-off and tested-layout diagnostics/heatmap. Full audio/media-rights review was not performed.
+- Live app: https://floorcraft-ruby.vercel.app/ — learner-published Vercel deployment, anonymous HTTP 200, rendered workspace/artwork/controls, reviewed application entry filename `index-B8PO9V5B.js`, and publicly served third-party runtime notices. The agent did not provision or change hosting.
+
+The learner reported completing the submission after sharing the actual required form/exit prompts; no separate pending survey was reported. Private-form wording and personal eligibility/rights declarations were not independently inspected or certified. Drafting assistance was explicitly requested, so do not assert learner-only authorship. Root `LICENSE` records the learner-approved MIT choice; `public/licenses/THIRD-PARTY-NOTICES.txt` and `Inter-OFL.txt` preserve third-party terms. See `checklist.md > Shipping — 6-ship` for the completed guided-workflow record and verification limits.
 
 ## Look and Feel
 
@@ -399,7 +408,7 @@ These checks establish internal consistency and sensitivity, not real-world vali
 
 ## External Services and Dependencies
 
-Only GitHub and Cloudflare Pages are external infrastructure. Runtime requests are static HTML/JS/CSS assets; there are no simulation endpoints, auth payloads, database calls, AI model calls, telemetry, or per-run API rate limits. Package installation uses npm; browser tests download Chromium. No paid dependency is required. Hosting quotas/plan suitability are documented under Cloudflare Pages Deployment and must be rechecked before publication.
+GitHub hosts the public source; the learner's final deployment uses Vercel. Cloudflare Pages remains the original optional hosting plan. Runtime requests are static HTML/JS/CSS assets; there are no simulation endpoints, auth payloads, database calls, AI model calls, telemetry, or per-run API rate limits. Package installation uses npm; browser tests download Chromium. No paid dependency is required. Any future hosting change should recheck that provider's current quotas and plan suitability.
 
 The user authenticates with GitHub/Cloudflare through their own browser when connecting the repository; do not request tokens in chat. The application ships no secrets. Preserve `.env` exclusions and the learner-profile ignore rule. Before making the repo public, check tracking as well as ignore rules.
 
@@ -426,7 +435,7 @@ The user authenticates with GitHub/Cloudflare through their own browser when con
 
 ### Agreed Choices
 
-- Learner selected JavaScript, React/Vite, React Konva, no backend, and GitHub-connected Cloudflare Pages.
+- Learner selected JavaScript, React/Vite, React Konva and no backend. GitHub-connected Cloudflare Pages was the original hosting plan; the learner published the final app on Vercel.
 - Learner accepted separate deterministic grid simulation, shared accessibility/routing, physically occupying queues, collision avoidance, simple reroute/yield, and honest failure outcomes.
 - Learner accepted obstruction-based congestion and completed-customer waiting averages with completion context, and requested supporting walking time. The PRD is updated to reflect this small addition.
 - Read-only tested snapshots never overwrite working edits; local saves retain only committed work and completed results.
